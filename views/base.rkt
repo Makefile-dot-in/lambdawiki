@@ -18,7 +18,7 @@
          (ul (li (a ([href "/"]) "Home"))))
        
        (section ([id "search"])
-         (form ([methocoded "GET"] [path "/search"])
+         (form ([method "GET"] [action "/search"])
                (label ([for "search-box"]) "Search:")
                (input ([type "text"] [name "q"] [id "search-box"]))
                (input ([type "submit"] [value "go"])))))
