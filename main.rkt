@@ -11,7 +11,9 @@
          web-server/servlet-env
          web-server/web-server
 
-         "config.rkt")
+         "config.rkt"
+         "handlers/errors.rkt"
+         "i18n/utils.rkt")
 
 (define files
   (~> (make-url->path "static")
@@ -21,9 +23,10 @@
 
 (define dispatcher
   (~> (sequencer:make files)
+      (error-dispatcher)
+      (locale-dispatcher)
       (logresp:make #:log-path (current-output-port)
-                    #:format 'apache-default
-                    _)))
+                    #:format 'apache-default)))
       
 (define config-file (make-parameter "config.rktd"))
 

@@ -1,2 +1,4 @@
 #lang s-exp "format.rkt"
-((software.name) "Lambdawiki")
+((search-label) "Search")
+((useful-links) "Useful links")
+((search-go) "go")

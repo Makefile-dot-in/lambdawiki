@@ -1,10 +1,14 @@
 #lang racket
-(require "base.rkt")
+(require xml
+         "base.rkt")
+(provide
+ (contract-out
+  [error-view (-> string? string? xexpr?)]))
 
-(define (error-template short long)
+(define (error-view short description)
   (base-template
    short
-   `(main
-     (div ,short)
-     ,long)))
+   `(main ([class "error-page"])
+     (div ([class "summary"]) ,short)
+     (div ([class "elaboration"]) ,description))))
    
