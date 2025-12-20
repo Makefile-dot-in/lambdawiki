@@ -3,8 +3,8 @@
  (except-out (all-from-out racket) #%module-begin)
  (rename-out [module-begin #%module-begin]))
 
-(define-syntax-rule (module-begin [pattern . rest] ...)
+(define-syntax-rule (module-begin [pattern-car pattern-cdr . rest] ...)
   (#%module-begin
    (provide localize)
    (define/match (localize val)
-     [(`pattern) . rest] ...)))
+     [(`(pattern-car . pattern-cdr)) (string-append . rest)] ...)))

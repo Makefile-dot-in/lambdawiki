@@ -1,2 +1,6 @@
 (wiki-name "Lambdawiki Demo")
 (default-locale "en")
+(data-source (postgresql (#:database "lambdawiki"
+                          #:server "localhost"
+                          #:user "make")
+                         ()))

@@ -1,6 +1,9 @@
 #lang racket
 (require xml
          "../config.rkt"
+         "../models/user.rkt"
+         "../session.rkt"
+         "../util.rkt"
          "../i18n/utils.rkt")
 
 (provide
@@ -11,6 +14,7 @@
 (define (base-template title content)
   `(html
     (head (title ,(format "~a : ~a" title (wiki-name)))
+          (meta ([charset "utf-8"]))
           (link ([rel "stylesheet"] [href "/static/style.css"])))
     (body
      (aside ([id "sidebar"])
@@ -20,6 +24,17 @@
          (div ,(format "~a:" ($ useful-links)))
          (ul ,@(for/list ([l (useful-links)])
                  `(li (a ([href ,(cdr l)]) ,(car l))))))
+
+       (aside ([id "user-info"])
+         ,(match (current-user)
+            [(user _ name)
+             `(div "logged in as: " (b ,name)
+                   (form ([method "POST"] [action ,(url-with-params "/signout" `((redirect-to . ,(current-url))))])
+                         (input ([type "submit"] [class "link-input"] [value ,($ signout-link)]))))]
+            [#f
+             `(div "not logged in"
+                   (a ([href ,(url-with-params "/login" `((redirect-to . ,(current-url))))])
+                      ,($ login-link)))]))
        
        (section ([id "search"])
          (form ([method "GET"] [action "/search"])

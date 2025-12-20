@@ -50,7 +50,15 @@ body {
     flex: 1;
 }
 
-/* specific pages */
+.link-input {
+    background-color: transparent;
+    color: blue;
+    text-decoration: underline;
+    border: none;
+    font-size: inherit;
+}
+
+/* specific pagesat-exp racket */
 
 #content:has(> .error-page) {
     display: flex;
@@ -63,4 +71,14 @@ body {
     .summary {
         font-size: 1.5em;
     }
+}
+
+/* login page */
+#content:has(> #login-page) {
+    display: flex;
+}
+
+#login-page {
+    margin: auto;
+    text-align: center;
 }
