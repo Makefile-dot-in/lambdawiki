@@ -6,8 +6,8 @@
 
          racket/random
          
-         "../db.rkt"
-         "../snowflake.rkt")
+         "../util/db.rkt"
+         "../util/snowflake.rkt")
 
 (provide
  (struct-out user)

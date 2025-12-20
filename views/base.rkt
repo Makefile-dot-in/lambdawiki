@@ -2,8 +2,8 @@
 (require xml
          "../config.rkt"
          "../models/user.rkt"
-         "../session.rkt"
-         "../util.rkt"
+         "../util/session.rkt"
+         "../util/misc.rkt"
          "../i18n/utils.rkt")
 
 (provide

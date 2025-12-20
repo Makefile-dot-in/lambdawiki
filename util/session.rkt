@@ -10,7 +10,7 @@
 
          "db.rkt"
          "snowflake.rkt"
-         "models/user.rkt")
+         "../models/user.rkt")
 
 (provide
  (struct-out
@@ -25,17 +25,8 @@
                               cookie?)]
   [get-session-from-request (-> request? session-id?)]))
 
-(struct exn:fail:unauthenticated exn:fail ())
-
 (define current-user
   (make-parameter #f))
-
-(define (assert-authorized . args)
-  (when (not (current-user))
-    (raise (exn:fail:unauthenticated)))
-  
-  (when (not (null? args))
-    (error "unimplemented")))
 
 (define (get-session-from-request req)
   (and~> req

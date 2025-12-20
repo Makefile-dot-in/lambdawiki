@@ -8,9 +8,9 @@
          web-server/http/redirect
          web-server/http/request-structs
          web-server/http/response-structs
-         "../db.rkt"
-         "../util.rkt"
-         "../session.rkt"
+         "../util/db.rkt"
+         "../util/misc.rkt"
+         "../util/session.rkt"
          "../i18n/utils.rkt"
          "../models/user.rkt"
          "../views/user.rkt")

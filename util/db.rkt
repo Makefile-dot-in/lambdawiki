@@ -1,7 +1,7 @@
 #lang racket
 (require (prefix-in db: db)
-         (only-in db virtual-connection connection-pool dsn-connect connection?)
-         "config.rkt")
+         (only-in db virtual-connection connection-pool dsn-connect connection? sql-null->false sql-null)
+         "../config.rkt")
 
 (provide
  ;; database initialization
@@ -16,11 +16,14 @@
  query-list
  query-row
  query-maybe-row
+ query-maybe-value
  in-query
  call-with-transaction
 
  ;; re-export from db
- connection?)
+ connection?
+ sql-null->false
+ sql-null)
 
 
 (define current-connection
@@ -52,6 +55,7 @@
   [query-list            db:query-list]
   [query-row             db:query-row]
   [query-maybe-row       db:query-maybe-row]
+  [query-maybe-value     db:query-maybe-value]
   [in-query              db:in-query]
   [call-with-transaction db:call-with-transaction])
 

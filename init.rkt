@@ -11,10 +11,10 @@
          web-server/dispatchers/filesystem-map
          web-server/web-server
          
-         "db.rkt"
+         "util/db.rkt"
          "config.rkt"
-         "session.rkt"
-         "util.rkt"
+         "util/session.rkt"
+         "util/misc.rkt"
          "handlers/user.rkt"
          "handlers/errors.rkt"
          "models/user.rkt"

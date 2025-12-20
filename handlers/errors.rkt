@@ -7,7 +7,7 @@
          (prefix-in lift: web-server/dispatchers/dispatch-lift)
          web-server/dispatchers/dispatch
 
-         "../session.rkt"
+         "../util/session.rkt"
          "../views/errors.rkt")
 
 (provide
