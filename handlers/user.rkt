@@ -35,27 +35,32 @@
 
 (define (login-page req)
   (define redirect-url
-    (request-query-param req 'request-url))
-  (match (form-run login-form req)
-    [`(passed (,username . ,password) ,render-widget)
-     (define maybe-user (check-username-password username password))
-     (if maybe-user
-         (redirect-to (or redirect-url "/") see-other          
-          #:headers
-          (list
-           (cookie->header
-            (create-session-cookie
-             #:user-id (user-id maybe-user)
-             #:expires-at (seconds->date (+ (current-seconds)
-                                            (years->seconds 7)))
-             #:ip-address (request-client-ip req)
-             #:user-agent (and~> req request-headers/raw
-                                 (headers-assq* #"user-agent" _)
-                                 header-value
-                                 (bytes->string/utf-8 #\�))))))
-         (response/xexpr (render-login-form render-widget (list ($ invalid-username-or-password)))))]
-    [(list _ _ render-widget)
-     (response/xexpr (render-login-form render-widget))]))
+    (or (request-query-param req 'request-url) "/"))
+
+  ;; if the user is already logged in, we just redirect them
+  (if (current-user)
+      (redirect-to redirect-url see-other)
+      (match (form-run login-form req)
+        [`(passed (,username . ,password) ,render-widget)
+         (define maybe-user (check-username-password username password))
+         (if maybe-user
+             (redirect-to
+              redirect-url see-other          
+              #:headers
+              (list
+               (cookie->header
+                (create-session-cookie
+                 #:user-id (user-id maybe-user)
+                 #:expires-at (seconds->date (+ (current-seconds)
+                                                (years->seconds 7)))
+                 #:ip-address (request-client-ip req)
+                 #:user-agent (and~> req request-headers/raw
+                                     (headers-assq* #"user-agent" _)
+                                     header-value
+                                     (bytes->string/utf-8 #\�))))))
+             (response/xexpr (render-login-form render-widget (list ($ invalid-username-or-password)))))]
+        [(list _ _ render-widget)
+         (response/xexpr (render-login-form render-widget))])))
 
 (define (signout-page req)
   ;; we probably don't want to do something like challenge the user to authenticate

@@ -28,11 +28,11 @@
        (aside ([id "user-info"])
          ,(match (current-user)
             [(user _ name)
-             `(div "logged in as: " (b ,name)
+             `(div ,($ login-status ,name) " "
                    (form ([method "POST"] [action ,(url-with-params "/signout" `((redirect-to . ,(current-url))))])
                          (input ([type "submit"] [class "link-input"] [value ,($ signout-link)]))))]
             [#f
-             `(div "not logged in"
+             `(div ,($ login-status #f) " "
                    (a ([href ,(url-with-params "/login" `((redirect-to . ,(current-url))))])
                       ,($ login-link)))]))
        

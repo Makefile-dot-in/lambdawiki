@@ -3,6 +3,7 @@
          forms
 
          "../i18n/utils.rkt"
+         "../config.rkt"
          "base.rkt")
 
 (provide
@@ -16,6 +17,7 @@
    ($ login-title)
    `(main
      ([id "login-page"])
+     (h1 ,($ login-header ,(wiki-name)))
      (form
       ([method "post"])
       ,@(if errors

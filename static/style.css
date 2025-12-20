@@ -31,6 +31,10 @@ body {
         padding-left: 2em;
     }
 
+    #user-info form {
+        display: inline-block;
+    }
+
     #search {
         margin: 3em 0;
         border: 1px solid #00000050;
@@ -56,6 +60,7 @@ body {
     text-decoration: underline;
     border: none;
     font-size: inherit;
+    cursor: pointer;
 }
 
 /* specific pagesat-exp racket */
@@ -81,4 +86,10 @@ body {
 #login-page {
     margin: auto;
     text-align: center;
+    label {
+        display: block;
+    }
+    * {
+        margin: 0.5em;
+    }
 }

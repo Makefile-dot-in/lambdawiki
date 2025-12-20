@@ -9,3 +9,6 @@
 @invalid-username-or-password[()]{Invalid username or password}
 @signout-link[()]{sign out}
 @login-link[()]{log in}
+@login-header[(,wiki-name)]{Log in to @wiki-name}
+@login-status[(#f)]{not logged in}
+@login-status[(,name)]{logged in as @name}
