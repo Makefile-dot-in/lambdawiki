@@ -15,8 +15,10 @@
          "config.rkt"
          "util/session.rkt"
          "util/misc.rkt"
+         "renderers/main.rkt"
          "handlers/user.rkt"
          "handlers/errors.rkt"
+         "handlers/article.rkt"
          "models/user.rkt"
          "i18n/utils.rkt")
 
@@ -32,7 +34,8 @@
 
 (define dispatcher
   (~> (sequencer:make files
-                      (lift:make user-servlet))
+                      (lift:make user-servlet)
+                      (lift:make article-servlet))
       error-dispatcher
       session-dispatcher
       locale-dispatcher
@@ -75,5 +78,6 @@
     (λ ()
       (displayln "Starting web server...")
       (start-user-services)
+      (load-renderers!)
       (serve #:dispatch dispatcher
              #:port 8080))))

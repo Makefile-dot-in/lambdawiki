@@ -7,7 +7,7 @@
          (prefix-in lift: web-server/dispatchers/dispatch-lift)
          web-server/dispatchers/dispatch
 
-         "../util/session.rkt"
+         "../util/permissions.rkt"
          "../views/errors.rkt")
 
 (provide
@@ -21,8 +21,8 @@
 (define-exn-values exn-values
   [(struct exn:dispatcher _)
    404 "Not found" "The requested resource was not found."]
-  [(struct exn:fail:unauthenticated _)
-   401 "Unauthenticated" "You need to be authenticated to access this resource."]
+  [(struct exn:fail:unauthorized _)
+   403 "Unauthorized" "You are not authorized to access this resource."]
   [_ 500 "Internal server error" "Your request could not be processed due to an internal server error."])
 
 (define (http-error-responder _url err)

@@ -20,12 +20,15 @@
      (aside ([id "sidebar"])
        (header ,(wiki-name))
        
-       (aside ([id "links"])
+       (section ([id "links"])
          (div ,(format "~a:" ($ useful-links)))
          (ul ,@(for/list ([l (useful-links)])
                  `(li (a ([href ,(cdr l)]) ,(car l))))))
 
-       (aside ([id "user-info"])
+       (section ([id "create-article"])
+         (a ([href "/new-article"]) ,($ create-new-article)))
+       
+       (section ([id "user-info"])
          ,(match (current-user)
             [(user _ name)
              `(div ,($ login-status ,name) " "

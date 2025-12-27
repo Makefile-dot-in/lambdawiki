@@ -13,8 +13,6 @@
          "../models/user.rkt")
 
 (provide
- (struct-out
-  exn:fail:unauthenticated)
  (contract-out
   [current-user          (parameter/c (or/c #f user?))]
   [session-dispatcher    (-> dispatcher/c dispatcher/c)]

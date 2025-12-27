@@ -12,3 +12,14 @@
 @login-header[(,wiki-name)]{Log in to @wiki-name}
 @login-status[(#f)]{not logged in}
 @login-status[(,name)]{logged in as @name}
+@mandatory-field[()]{Mandatory field}
+@create-article[()]{Create an article}
+@article-title[()]{Title}
+@article-content-type[()]{Type}
+@article-upload[()]{Upload}
+@article-create-submit[()]{Create the article}
+@article-class[()]{Class}
+@article-content[()]{Content}
+@invalid-title-for-class[()]{Articles with this class may not be created with this title}
+@create-new-article[()]{Create new article}
+@reference-title[()]{References}

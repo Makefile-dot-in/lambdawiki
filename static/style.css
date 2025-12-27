@@ -97,3 +97,23 @@ body {
         margin: 0.5em;
     }
 }
+
+#article-page {
+    form {
+        label { display: block }
+        * { margin: 0.3em; }
+        .article-content-section {
+            width: 100%;
+            textarea { display: block; width: 100%; }
+        }
+
+        .article-content-upload {
+            display: none;
+        }
+    }
+}
+
+#article-page:has(option[data-binary]:checked) {
+    .article-content-section { display: none; }
+    .article-content-upload { display: inline; }
+}
