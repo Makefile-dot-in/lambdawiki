@@ -15,10 +15,12 @@
                                    [(or/c #f (listof string?))]
                                    xexpr?)]))
 
+
 (define (article-view article)
   (base-template
    (article-name article)
    `(main
+     ([id "article-view"])
      (h1 ,(article-name article))
      (article
       ,@(article-rendering article)))))

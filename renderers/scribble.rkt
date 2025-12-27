@@ -69,14 +69,17 @@
 (define (render-wikiscribble-elements refs secs lst)
   (map (curry render-wikiscribble-element refs secs) lst))
 
-(define (add-refs refs forms)
-  (append
-   forms
-   `((section ,($ reference-title))
-     (ul
-      ,@(for/list ([(ref i) (in-indexed (reverse refs))])
-          `(li (a ([id ,(format "ref-~a" i)]))
-               (cite ,@(map (curry render-wikiscribble-element (mcons 0 null) (mcons 0 null)) ref))))))))
+(define (add-refs refs secpair forms)
+  (if (null? refs) forms
+      (begin
+        (append-section secpair ($ reference-title))
+        (append
+         forms
+         `((h2 ,($ reference-title))
+           (ul
+            ,@(for/list ([(ref i) (in-indexed (reverse refs))])
+                `(li (a ([id ,(format "ref-~a" i)]))
+                     (cite ,@(map (curry render-wikiscribble-element (mcons 0 null) (mcons 0 null)) ref))))))))))
 
 (define (table-of-contents secpair)
   `(div
@@ -116,8 +119,8 @@
   (define secpair (mcons 0 null))
   (~> doc
       (render-wikiscribble-elements refpair secpair _)
-      (add-toc (mcdr secpair) _)
-      (add-refs (mcdr refpair) _)))
+      (add-refs (mcdr refpair) secpair _)
+      (add-toc (mcdr secpair) _)))
 
 (define-runtime-path environment-path "environments/scribble.rkt")
 (define (sandbox-scribble-reader src)

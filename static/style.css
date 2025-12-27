@@ -117,3 +117,14 @@ body {
     .article-content-section { display: none; }
     .article-content-upload { display: inline; }
 }
+
+#article-view {
+    h1, h2 {
+        font-weight: normal;
+        text-decoration: underline 3px lightgray;
+        text-underline-offset: 0.15em;
+    }
+
+    h1 { font-size: 1.9em; }
+    h2 { font-size: 1.4em; }
+}
