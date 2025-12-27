@@ -29,4 +29,4 @@
   `(table ,alignments ,headers . ,rest))
 
 (define (link target . appearance)
-  `(link ,target ,(if (null? appearance) target appearance)))
+  `(link ,target . ,(if (null? appearance) (list target) appearance)))

@@ -52,7 +52,7 @@
      `(h3 . ,(recurse r))]
     [`(ref . ,r)
      (define n (append-refs refs r))
-     `(a ([href ,(format "#ref-~a" n) class "ref"])
+     `(a ([href ,(format "#ref-~a" n)] [class "ref"])
          ,(format "[~a]" n))]
     [`(table ,alignments ,headers . ,rows)
      `(table
@@ -133,7 +133,8 @@
          (define result (evaluator 'output))
          (call-in-sandbox-context
           evaluator
-          (λ () (render-output result))))))))
+          (λ ()
+            (render-output result))))))))
 
 (register-content-type! "scribble" "Wikiscribble" renderer
                         #:binary #t)
