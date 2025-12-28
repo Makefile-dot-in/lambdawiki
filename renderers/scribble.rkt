@@ -82,11 +82,12 @@
          `((h2 ,($ reference-title))
            (ol
             ,@(for/list ([(ref i) (in-indexed (reverse refs))])
-                `(li (a ([id ,(format "ref-~a" i)]))
+                `(li
+                  (a ([id ,(format "ref-~a" (add1 i))])
                      (cite ,@(map (curry render-wikiscribble-element
                                          (mcons 0 null)
                                          (mcons 0 null))
-                                  ref))))))))))
+                                  ref)))))))))))
 
 
 (define (table-of-contents secs)
@@ -142,8 +143,7 @@
 
 (define (renderer bytes)
   (define text (bytes->string/utf-8 bytes #\�))
-  (define cloc (current-locale))
-  (with-limits 1000000000 256
+  (with-limits 3 256
     (parameterize ([sandbox-reader sandbox-scribble-reader])
       (define evaluator (make-evaluator environment-path text #:allow-for-require (list environment-path)))
       (call-with-custodian-shutdown
