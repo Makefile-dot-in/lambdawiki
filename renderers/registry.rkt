@@ -2,6 +2,7 @@
 (require xml
          threading
          (prefix-in model: "../models/content-types.rkt")
+         "../util/db.rkt"
          "../util/snowflake.rkt")
 
 (provide
@@ -18,12 +19,13 @@
 
 (define (register-content-type! textid human-name renderer
                                 #:binary binary)
-  (define id (model:register-content-type! textid human-name
-                                           #:binary binary))
-  (define entry (registry-entry id textid human-name renderer binary))
-  (hash-set! textid-registry textid entry)
-  (hash-set! id-registry id entry)
-  id)
+  (when (current-connection)
+    (define id (model:register-content-type! textid human-name
+                                             #:binary binary))
+    (define entry (registry-entry id textid human-name renderer binary))
+    (hash-set! textid-registry textid entry)
+    (hash-set! id-registry id entry)
+    id))
 
 (define (render-content-type id source)
   (~> id-registry (hash-ref id) registry-entry-renderer (_ source)))

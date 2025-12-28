@@ -14,6 +14,16 @@ body {
     font-family: sans-serif;
 }
 
+table {
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+td, th {
+    border: 1px solid black;
+    padding: 0.3rem;
+}
+
 #sidebar {
     padding: 10;
     background-color: lightgray;
@@ -61,10 +71,13 @@ body {
 .link-input {
     background-color: transparent;
     color: blue;
-    text-decoration: underline;
     border: none;
     font-size: inherit;
     cursor: pointer;
+}
+
+a {
+    text-decoration: none;
 }
 
 /* specific pagesat-exp racket */
@@ -144,4 +157,22 @@ body {
 
     h1 { font-size: 1.9em; }
     h2 { font-size: 1.4em; }
+
+    #toc {
+        display: inline-block;
+        background-color: #eeeeee;
+        padding: 0.5em;
+        margin: 0.5em;
+        h3 {
+            text-align: center;
+            font-size: 1rem;
+            margin: 0;
+            margin-bottom: 0.5em;
+        }
+        ol {
+            padding-top: 0; padding-bottom: 0;
+            margin-top: 0; margin-bottom: 0;
+        }
+        border: 1px solid black;
+    }
 }

@@ -25,8 +25,8 @@
 
 (define (table #:alignments [alignments null]
                #:headers [headers null]
-               . rest)
-  `(table ,alignments ,headers . ,rest))
+               rest)
+  `(table ,alignments ,headers ,rest))
 
 (define (link target . appearance)
   `(link ,target . ,(if (null? appearance) (list target) appearance)))

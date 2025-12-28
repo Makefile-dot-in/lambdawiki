@@ -15,7 +15,7 @@
   (set-mcdr! refpair (cons ref (mcdr refpair)))
   (mcar refpair))
 
-(struct secent (number kind content))
+(struct secent (number kind content) #:transparent)
 
 (define (append-section secpair section)
   (set-mcar! secpair (+ 1 (mcar secpair)))
@@ -31,11 +31,15 @@
 
 (define (generate-row refs secs elem alignments data)
   `(tr ,@(for/list ([cell data]
-                    [alignment (in-sequences alignments (in-cycle 'left))])
+                    [alignment (in-sequences alignments (in-cycle '(left)))])
            `(,elem ([class ,(case alignment
                               ['left "align-left"]
                               ['right "align-right"])])
-                   ,@(map (curry render-wikiscribble-element refs secs) cell)))))
+                   ,@(cond
+                      [(list? cell)
+                       (render-wikiscribble-elements refs secs cell)]
+                      [else
+                       (list (render-wikiscribble-element refs secs cell))])))))
 
 (define (render-wikiscribble-element refs secs f)
   (define recurse (curry render-wikiscribble-elements refs secs))
@@ -45,23 +49,23 @@
     [`(italic . ,r)
      `(i . ,(recurse r))]
     [`(section . ,r)
-     (append-section secs r)
-     `(h2 . ,(recurse r))]
+     (define n (append-section secs r))
+     `(h2 ([id ,(format "section-~a" n)]) . ,(recurse r))]
     [`(subsubsection . ,r)
-     (append-subsection refs r)
-     `(h3 . ,(recurse r))]
+     (define n (append-subsection refs r))
+     `(h3 ([id ,(format "section-~a" n)]) . ,(recurse r))]
     [`(ref . ,r)
      (define n (append-refs refs r))
      `(a ([href ,(format "#ref-~a" n)] [class "ref"])
          ,(format "[~a]" n))]
-    [`(table ,alignments ,headers . ,rows)
+    [`(table ,alignments ,headers ,rows)
      `(table
        ,@(if (null? headers) null
-             `((thead ,@(generate-row refs 'th alignments headers))))
+             `((thead ,(generate-row refs secs 'th alignments headers))))
 
        (tbody
         ,@(for/list ([row rows])
-            (generate-row refs 'td alignments row))))]
+            (generate-row refs secs 'td alignments row))))]
     [`(link ,target . ,appearance)
      `(a ([href ,(url-to-article target)]) ,@(recurse appearance))]
     [(? string?) f]))
@@ -72,55 +76,65 @@
 (define (add-refs refs secpair forms)
   (if (null? refs) forms
       (begin
-        (append-section secpair ($ reference-title))
+        (append-section secpair (list ($ reference-title)))
         (append
          forms
          `((h2 ,($ reference-title))
-           (ul
+           (ol
             ,@(for/list ([(ref i) (in-indexed (reverse refs))])
                 `(li (a ([id ,(format "ref-~a" i)]))
-                     (cite ,@(map (curry render-wikiscribble-element (mcons 0 null) (mcons 0 null)) ref))))))))))
+                     (cite ,@(map (curry render-wikiscribble-element
+                                         (mcons 0 null)
+                                         (mcons 0 null))
+                                  ref))))))))))
 
-(define (table-of-contents secpair)
+
+(define (table-of-contents secs)
   `(div
     ([id "toc"])
-    (b ,($ table-of-contents))
+    (h3 ,($ table-of-contents))
     (ol
+     (li (a ([href "#article-title"]) ,($ article-introduction)))
      ,@(~>
-        secpair reverse
-        (slice-by (λ (_ a) (secent-kind a)) _)
+        secs reverse
+        (slice-by (λ (a b)
+                    (match* ((secent-kind a) (secent-kind b))
+                      [('subsection 'section) #t]
+                      [(_ _) #f])) _)
         (map
          (match-λ
           [(cons (secent number _ content) subsections)
            `(li
-             (a ([id ,(format "section-~a" number)]
-                 ,@(render-wikiscribble-elements (mcons 0 null) (mcons 0 null) content)))
+             (a ([href ,(format "#section-~a" number)])
+                ,@(render-wikiscribble-elements
+                   (mcons 0 null) (mcons 0 null) content))
 
              ,@(if (null? content) null
                    `((ol
-                      ,@(map (match-λ
-                              [(secent number _ content)
-                               `(li
-                                 (a ([id ,(format "section-~a" number)])
-                                    ,@(render-wikiscribble-elements (mcons 0 null) (mcons 0 null) content)))])
-                             subsections)))))]
+                      ,@(map
+                         (match-λ
+                          [(secent number _ content)
+                           `(li
+                             (a ([href ,(format "#section-~a" number)])
+                                ,@(render-wikiscribble-elements
+                                   (mcons 0 null) (mcons 0 null)
+                                   content)))])
+                         subsections)))))]
           ['() '()])
          _)))))
 
 (define (add-toc secpair document)
-  (append-map (match-λ
-               [(and r `(h2 . ,_)) (list (table-of-contents secpair) r)]
-               [x (list x)])
-              document))
-
+  (match document
+    [`((h2 . ,_) . ,_) (cons (table-of-contents secpair) document)]
+    [(cons el els) (cons el (add-toc secpair els))]))
 
 (define (render-output doc)
   (define refpair (mcons 0 null))
   (define secpair (mcons 0 null))
   (~> doc
       (render-wikiscribble-elements refpair secpair _)
-      (add-refs (mcdr refpair) secpair _)
-      (add-toc (mcdr secpair) _)))
+      ((λ (e) (add-refs (mcdr refpair) secpair e)))
+      ((λ (e) (add-toc (mcdr secpair) e)))))
 
 (define-runtime-path environment-path "environments/scribble.rkt")
 (define (sandbox-scribble-reader src)
@@ -128,7 +142,8 @@
 
 (define (renderer bytes)
   (define text (bytes->string/utf-8 bytes #\�))
-  (with-limits 3 256
+  (define cloc (current-locale))
+  (with-limits 1000000000 256
     (parameterize ([sandbox-reader sandbox-scribble-reader])
       (define evaluator (make-evaluator environment-path text #:allow-for-require (list environment-path)))
       (call-with-custodian-shutdown

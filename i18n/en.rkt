@@ -40,9 +40,11 @@
 @article-revisions-next[()]{next}
 @article-revisions-prev[()]{prev}
 @article-links-page[()]{page}
-@article-links-revisions[()]{page revisions}
-@article-links-edit[()]{edit page}
+@article-links-revisions[()]{page history}
+@article-links-edit[()]{edit}
 @invalid-title-for-class[()]{Articles with this class may not be created with this title}
 @reference-title[()]{References}
 @title-must-be-unique[()]{Title must be unique}
 @article-create-sidelink[()]{Create an article}
+@table-of-contents[()]{Table of contents}
+@article-introduction[()]{Introduction}

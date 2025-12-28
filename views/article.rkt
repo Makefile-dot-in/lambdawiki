@@ -46,10 +46,10 @@
       (ul
        ,@(for/list ([link `((l article-links-page
                              ,(url-to-article article-title))
-                            (1r article-links-revisions
-                             ,(url-to-article-revisions article-title))
-                            (r article-links-edit
-                             ,(edit-article-url article-title)))])
+                            (1r article-links-edit
+                             ,(edit-article-url article-title))
+                            (r article-links-revisions
+                               ,(url-to-article-revisions article-title)))])
            (match-define (list align key url) link)
            (define alignment-class (match align
                                      ['l "align-l"]
@@ -70,7 +70,8 @@
    (article-name article)
    `(main
      ([id "article-view"])
-     (h1 ,(article-name article))
+     (h1 ([id "article-title"])
+         ,(article-name article))
      (article
       ,@(article-rendering article)))))
 
