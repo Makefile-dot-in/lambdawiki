@@ -8,7 +8,10 @@
 
 (provide
  (contract-out
-  [base-template (string? xexpr? . -> . xexpr?)]))
+  [base-template (string? xexpr? . -> . xexpr?)]
+  [generate-table (->* [(listof string?) (listof (listof string?))]
+                       [#:id (or/c #f string?)]
+                       xexpr?)]))
 
 ;; Basic template for displaying the view
 (define (base-template title content)
@@ -47,3 +50,11 @@
 
      (div ([id "content"])
           ,content))))
+
+(define (generate-table headers rows #:id [id #f])
+  `(table ,@(if (not id) null `(((id ,headers))))
+    (thead
+     (tr ,@(map (curry list 'th) headers)))
+    (tbody
+     ,@(for/list ([r rows])
+         (map (curry list 'td) r)))))

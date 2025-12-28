@@ -1,11 +1,23 @@
 #lang racket
 (require xml
          forms
+         threading
+
+         net/url
+
+         racket/date
+         racket/lazy-require
+
          web-server/http/request-structs
+
          "base.rkt"
          "../i18n/utils.rkt"
+         "../util/misc.rkt"
+         "../util/snowflake.rkt"
          "../models/class.rkt"
+         "../models/user.rkt"
          "../models/article.rkt"
+         "../models/revisions.rkt"
          "../models/content-types.rkt")
 
 (provide
@@ -14,13 +26,47 @@
   [article-create (->* [widget-renderer/c]
                        [(or/c #f (listof string?))]
                        xexpr?)]
-  [article-edit (->* [widget-renderer/c]
+  [article-edit (->* [string? widget-renderer/c]
                      [(or/c #f (listof string?))]
-                     xexpr?)]))
+                     xexpr?)]
+  [article-revisions-view (-> string? (or/c #f exact-integer?)
+                              exact-integer? exact-integer?
+                              (listof article-revision?)
+                              xexpr?)]))
 
+(lazy-require ["../handlers/article.rkt"
+               (url-to-article edit-article-url url-to-article-revisions)])
+
+(define (article-base-template title article-title body)
+  (base-template
+   title
+   `(div
+     ([id "article-base"])
+     (nav
+      (ul
+       ,@(for/list ([link `((l article-links-page
+                             ,(url-to-article article-title))
+                            (1r article-links-revisions
+                             ,(url-to-article-revisions article-title))
+                            (r article-links-edit
+                             ,(edit-article-url article-title)))])
+           (match-define (list align key url) link)
+           (define alignment-class (match align
+                                     ['l "align-l"]
+                                     ['r "align-r"]
+                                     ['1r "align-1r"]))
+           (if (equal? (~> (current-url) string->url url-path)
+                       (~> url string->url url-path))
+               `(li ([class ,alignment-class])
+                    ,($ ,key))
+               `(li ([class ,alignment-class])
+                    (a ([href ,url]) ,($ ,key)))))))
+
+     ,body)))
 
 (define (article-view article)
-  (base-template
+  (article-base-template
+   (article-name article)
    (article-name article)
    `(main
      ([id "article-view"])
@@ -98,10 +144,66 @@
     ($ article-create-submit)
     render-widget errors)))
 
-(define (article-edit render-widget [errors #f])
-  (base-template
+(define (article-edit article-title render-widget [errors #f])
+  (article-base-template
    ($ edit-article)
+   article-title
    (article-edit-render-form
     ($ edit-article)
     ($ article-edit-submit)
     render-widget errors)))
+
+(define (check-xexpr x) (println (xexpr? x)) x)
+
+(define (article-revisions-view title count limit offset revisions)
+  (article-base-template
+   ($ article-revisions ,title)
+   title
+   `(main
+     ([id "article-revisions"])
+
+     (h1 ,($ article-revisions ,title))
+     ,@(if (not count) null
+           `(p ,($ found-revisions ,count)))
+     ,(generate-table
+       (list ($ article-revisions-time)
+             ($ article-revisions-author)
+             ($ article-revisions-actions))
+
+       (for/list ([r revisions])
+         (list (~> r article-revision-id snowflake->date
+                   (date->string #t))
+               (match (article-revision-author r)
+                 [(struct user (_ username)) username]
+                 [ip ip])
+               "[placeholder]")))
+
+     (form
+      ([method "get"])
+      (label
+       ,(format "~a:" ($ article-revisions-limit-label))
+       (select
+        ([name "limit"])
+        ,@(for/list ([l '("25" "50" "100")])
+            (if (equal? l limit)
+                `(option ([value ,l] [selected ""]) ,l)
+                `(option ([value ,l]) ,l)))))
+
+      (input ([type "submit"]
+              [value ,($ article-revisions-limit-submit)])))
+     
+     ,@(if (equal? offset 0) null
+           `((a ([href
+                  ,(url-with-params
+                    ""
+                    `((offset . ,(max 0 (- limit offset)))
+                      (limit . ,limit)))])
+                ,(format "[~a]" ($ article-revisions-next)))))
+
+     ,@(if (offset . < . (+ limit offset)) null
+           `((a ([href
+                  ,(url-with-params
+                    ""
+                    `((offset . ,(max 0 (+ limit offset)))
+                      (limit . ,limit)))])
+                ,(format "[~a]" ($ article-revisions-prev))))))))

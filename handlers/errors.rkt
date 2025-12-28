@@ -7,23 +7,29 @@
          (prefix-in lift: web-server/dispatchers/dispatch-lift)
          web-server/dispatchers/dispatch
 
+         "../i18n/utils.rkt"
          "../util/permissions.rkt"
+         "../util/misc.rkt"
          "../views/errors.rkt")
 
 (provide
  (contract-out
   [error-dispatcher (-> dispatcher/c dispatcher/c)]))
 
-(define-syntax-rule (define-exn-values fn [pat ret short description] ...)
-  (define/match (fn e)
-    [(pat) (values ret short description)] ...))
+(define-syntax-rule (define-exn-values fn [pat ret sym] ...)
+  (define (fn e)
+    (let-values ([(code symb)
+                  (match e
+                    [pat (values ret 'sym)] ...)])
+      (values code
+              ($ error-short ,symb)
+              ($ error-description ,symb)))))
 
 (define-exn-values exn-values
-  [(struct exn:dispatcher _)
-   404 "Not found" "The requested resource was not found."]
-  [(struct exn:fail:unauthorized _)
-   403 "Unauthorized" "You are not authorized to access this resource."]
-  [_ 500 "Internal server error" "Your request could not be processed due to an internal server error."])
+  [(struct exn:dispatcher _) 404 no-handler]
+  [(struct exn:fail:article-not-found _) 404 article-not-found]
+  [(struct exn:fail:unauthorized _) 403 unauthorized]
+  [_ 500 internal-error])
 
 (define (http-error-responder _url err)
   (when (exn:fail? err)

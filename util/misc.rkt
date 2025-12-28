@@ -5,11 +5,13 @@
          web-server/dispatchers/dispatch)
 
 (provide
+ (struct-out exn:fail:article-not-found)
  (contract-out
   [hours->seconds (-> number? number?)]
   [days->seconds  (-> number? number?)]
   [years->seconds (-> number? number?)]
   [current-url (parameter/c (or/c #f string?))]
+  [not-found (-> string? any)]
   [contextualizing-dispatcher (-> dispatcher/c dispatcher/c)]
   [request-query-param (-> request? symbol? (or/c string? #f))]
   [url-with-params (-> string? (listof (cons/c symbol? string?)) string?)]))
@@ -20,6 +22,14 @@
 
 (define current-url
   (make-parameter #f))
+
+(struct exn:fail:article-not-found exn:fail (article-name))
+
+(define (not-found name)
+  (raise (exn:fail:article-not-found
+          (format "article ~a not found" name)
+          (current-continuation-marks)
+          name)))
 
 ;; turns current-url into a parameter to allow embedding redirects in views/base
 (define (contextualizing-dispatcher inner)

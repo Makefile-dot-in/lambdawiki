@@ -98,6 +98,23 @@ body {
     }
 }
 
+#article-base > nav {
+    margin: 0;
+    ul {
+        display: flex;
+        padding: 0;
+        margin-top: 0;
+        li {
+            margin: 0.2em;
+            display: inline;
+        }
+
+        .align-1r {
+            margin-left: auto;
+        }
+    }
+}
+
 #article-page {
     form {
         label { display: block }

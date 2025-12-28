@@ -7,24 +7,29 @@
          web-server/http/redirect
          web-server/http/request-structs
          "../util/db.rkt"
+         "../util/misc.rkt"
          "../util/permissions.rkt"
          "../renderers/main.rkt"
          "../models/article.rkt"
          "../models/class.rkt"
          "../models/permissions.rkt"
+         "../models/revisions.rkt"
          "../models/content-types.rkt"
          "../views/article.rkt"
          "../i18n/utils.rkt")
 
 (provide article-servlet
          url-to-article
-         new-article-url)
+         new-article-url
+         edit-article-url
+         url-to-article-revisions)
 
 (define-values (article-servlet article-url)
   (dispatch-rules
    [("wiki" (string-arg)) view-article]
    [("wiki" (string-arg) "edit") #:method (or "get" "post")
                                  edit-article]
+   [("wiki" (string-arg) "revisions") article-revisions]
    [("new-article") #:method (or "get" "post")
                     create-article]))
 
@@ -38,6 +43,7 @@
   (call-with-transaction
    (λ ()
      (define article (get-article-from-path name))
+     (when (not article) (not-found name))
      (check-authorization-for-article 'general/read (article-id article))
      (when (not (article-rendering article))
        (let ([rendering (render-content-type
@@ -131,7 +137,7 @@
      (define old-ct (find-content-type-by-id old-ctid))
      (define old-classes (get-classes-of-article id))
      (article-edit-form
-      req article-edit
+      req (curry article-edit old-title)
       #:defaults
       (hash
        "title-and-class-subform.title" old-title
@@ -154,5 +160,22 @@
         (edit-article! id title ctid content)
         (set-article-classes! id classes))))))
 
+(define (article-revisions req name)
+  (define articleval (get-article-from-path name))
+  (when (not articleval) (not-found name))
+  (define id (article-id articleval))
+
+  (define offset (or (request-query-param req 'offset) 0))
+  (define limit (or (request-query-param req 'limit) 50))
+
+  (define-values (num-revisions revisions)
+    (get-revisions-for-article id #:limit limit #:offset offset))
+
+  (response/xexpr (article-revisions-view
+                   name num-revisions limit offset revisions)))
+
 (define url-to-article (curry article-url view-article))
 (define new-article-url (curry article-url create-article))
+(define edit-article-url (curry article-url edit-article))
+(define url-to-article-revisions
+  (curry article-url article-revisions))

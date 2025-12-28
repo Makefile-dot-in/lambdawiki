@@ -8,7 +8,7 @@
 (provide
  (struct-out article)
  (contract-out
-  [get-article-from-path (-> string? article?)]
+  [get-article-from-path (-> string? (or/c #f article?))]
   [add-rendering-for-article! (-> snowflake? (listof xexpr?) any)]
   [create-article! (-> string? snowflake? bytes? snowflake?)]
   [edit-article! (-> snowflake? string? snowflake? bytes? any)])

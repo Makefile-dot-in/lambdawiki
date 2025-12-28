@@ -3,8 +3,10 @@
          (only-in
           db
           virtual-connection connection-pool
-          dsn-connect connection? sql-null->false
+          dsn-connect connection?
+          sql-null->false
           sql-null
+          sql-null?
           exn:fail:sql
           exn:fail:sql?
           exn:fail:sql-info
@@ -33,6 +35,7 @@
  connection?
  sql-null->false
  sql-null
+ sql-null?
  exn:fail:sql
  exn:fail:sql?
  exn:fail:sql-sqlstate
