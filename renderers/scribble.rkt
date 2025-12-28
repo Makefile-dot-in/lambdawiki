@@ -127,7 +127,8 @@
 (define (add-toc secpair document)
   (match document
     [`((h2 . ,_) . ,_) (cons (table-of-contents secpair) document)]
-    [(cons el els) (cons el (add-toc secpair els))]))
+    [(cons el els) (cons el (add-toc secpair els))]
+    ['() '()]))
 
 (define (render-output doc)
   (define refpair (mcons 0 null))
