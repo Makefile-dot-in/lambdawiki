@@ -1,6 +1,7 @@
 #lang racket
 (require forms
          threading
+         (prefix-in srfi1: srfi/1)
          web-server/dispatch
          web-server/http/xexpr
          web-server/http/redirect
@@ -22,11 +23,16 @@
 (define-values (article-servlet article-url)
   (dispatch-rules
    [("wiki" (string-arg)) view-article]
+   [("wiki" (string-arg) "edit") #:method (or "get" "post")
+                                 edit-article]
    [("new-article") #:method (or "get" "post")
                     create-article]))
 
 (register-article-permission! 'general/read "Read articles")
+(register-article-permission! 'general/create "Create articles")
 (register-article-permission! 'general/write "Write articles")
+(register-article-permission! 'class/add "Add class")
+(register-article-permission! 'class/remove "Remove class")
 
 (define (view-article _req name)
   (call-with-transaction
@@ -89,16 +95,64 @@
                      (car body-subform)
                      (cdr body-subform))))
 
+
+(define (article-edit-form req renderer on-submit
+                           #:defaults [defaults (hash)])
+  (match (form-run (create-form) req #:defaults defaults)
+    [`(passed ,(form-submission title classes type content) ,render-widget)
+     (with-handlers
+       ([exn:fail:sql:unique-name-violation?
+         (λ (e)
+           (response/xexpr
+            (renderer render-widget (list ($ title-must-be-unique)))))])
+       (on-submit title classes (content-type-id type) content)
+       (redirect-to (url-to-article title) see-other))]
+    [(list _ _ render-widget)
+     (response/xexpr (renderer render-widget))]))
+
+
 (define (create-article req)
-  (match (form-run (create-form) req)
-    [`(passed ,(form-submission title classes type content) ,_)
-     (check-authorization-for-class 'general/write all-class)
-     (for-each (curry check-authorization-for-class 'general/write) classes)
-     (create-article! title (content-type-id type) content)
-     (redirect-to (url-to-article title) see-other)]
-    [(and x (list _ _ render-widget))
-     (print x)
-     (response/xexpr (create-article-render-form render-widget))]))
+  (article-edit-form
+   req article-create
+   (λ (title classes ctid content)
+     (call-with-transaction
+      (λ ()
+        (check-authorization-for-class 'general/create all-class)
+        (for-each (curry check-authorization-for-class 'class/add)
+                  classes)
+        (~> (create-article! title ctid content)
+            (set-article-classes! classes)))))))
+
+(define (edit-article req name)
+  (call-with-transaction
+   (λ ()
+     (match-define (article id old-title old-ctid old-content _)
+       (get-article-from-path name))
+     (define old-ct (find-content-type-by-id old-ctid))
+     (define old-classes (get-classes-of-article id))
+     (article-edit-form
+      req article-edit
+      #:defaults
+      (hash
+       "title-and-class-subform.title" old-title
+       "title-and-class-subform.classes" old-classes
+       "body-subform.type" (number->string old-ctid)
+       "body-subform.source" (if (content-type-binary old-ct) ""
+                                 old-content))
+
+      (λ (title classes ctid content)
+        (check-authorization-for-article 'general/write id)
+
+        ; we check which articles have been added and removed and
+        ; check their permissions
+        (for-each (curry check-authorization-for-class 'class/remove)
+                  (srfi1:lset-difference equal? old-classes classes))
+
+        (for-each (curry check-authorization-for-class 'class/add)
+                  (srfi1:lset-difference equal? classes old-classes))
+
+        (edit-article! id title ctid content)
+        (set-article-classes! id classes))))))
 
 (define url-to-article (curry article-url view-article))
 (define new-article-url (curry article-url create-article))

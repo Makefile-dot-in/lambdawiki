@@ -1,6 +1,14 @@
 #lang racket
 (require (prefix-in db: db)
-         (only-in db virtual-connection connection-pool dsn-connect connection? sql-null->false sql-null)
+         (only-in
+          db
+          virtual-connection connection-pool
+          dsn-connect connection? sql-null->false
+          sql-null
+          exn:fail:sql
+          exn:fail:sql?
+          exn:fail:sql-info
+          exn:fail:sql-sqlstate)
          "../config.rkt")
 
 (provide
@@ -13,6 +21,7 @@
  ;; implicit versions of db's functions
  query-exec
  query-rows
+
  query-list
  query-row
  query-maybe-row
@@ -23,11 +32,18 @@
  ;; re-export from db
  connection?
  sql-null->false
- sql-null)
+ sql-null
+ exn:fail:sql
+ exn:fail:sql?
+ exn:fail:sql-sqlstate
+ exn:fail:sql-info
 
+ unique-constraint-violation)
 
 (define current-connection
   (make-parameter #f))
+
+(define unique-constraint-violation "23505")
 
 (define (create-connection)
   (virtual-connection

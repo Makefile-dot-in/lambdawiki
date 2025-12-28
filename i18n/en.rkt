@@ -14,12 +14,15 @@
 @login-status[(,name)]{logged in as @name}
 @mandatory-field[()]{Mandatory field}
 @create-article[()]{Create an article}
+@edit-article[()]{Edit article}
 @article-title[()]{Title}
 @article-content-type[()]{Type}
 @article-upload[()]{Upload}
 @article-create-submit[()]{Create the article}
+@article-edit-submit[()]{Apply edit}
 @article-class[()]{Class}
 @article-content[()]{Content}
 @invalid-title-for-class[()]{Articles with this class may not be created with this title}
-@create-new-article[()]{Create new article}
 @reference-title[()]{References}
+@title-must-be-unique[()]{Title must be unique}
+@article-create-sidelink[()]{Create an article}

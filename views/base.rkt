@@ -26,7 +26,7 @@
                  `(li (a ([href ,(cdr l)]) ,(car l))))))
 
        (section ([id "create-article"])
-         (a ([href "/new-article"]) ,($ create-new-article)))
+         (a ([href "/new-article"]) ,($ article-create-sidelink)))
        
        (section ([id "user-info"])
          ,(match (current-user)

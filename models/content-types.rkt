@@ -14,6 +14,7 @@
                             any)]
   [register-content-type! (-> string? string? #:binary boolean?
                               any)]
+  [find-content-type-by-id (-> snowflake? content-type?)]
   [get-content-types (-> (listof content-type?))]))
 
 (struct content-type (id textid name binary))
@@ -47,6 +48,12 @@
                   #:values id textid name is_binary))
 
          vector->content-type))
+
+(define (find-id-by-name name)
+  (query-maybe-value
+   (select #:from articles
+           #:where (= name ,name)
+           #:values id)))
 
 (define (get-content-types)
   (map vector->content-type
