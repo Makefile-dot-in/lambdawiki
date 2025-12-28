@@ -6,6 +6,7 @@
          web-server/http/xexpr
          web-server/http/redirect
          web-server/http/request-structs
+         "../config.rkt"
          "../util/db.rkt"
          "../util/misc.rkt"
          "../util/permissions.rkt"
@@ -26,6 +27,7 @@
 
 (define-values (article-servlet article-url)
   (dispatch-rules
+   [("") (λ (req) (redirect-to (url-to-article (main-page)) see-other))]
    [("wiki" (string-arg)) view-article]
    [("wiki" (string-arg) "edit") #:method (or "get" "post")
                                  edit-article]
