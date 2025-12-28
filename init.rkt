@@ -80,4 +80,4 @@
       (start-user-services)
       (load-renderers!)
       (serve #:dispatch dispatcher
-             #:port 8080))))
+             #:port (http-port)))))

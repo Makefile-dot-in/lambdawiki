@@ -3,7 +3,7 @@
 (provide
  (contract-out
   [with-config (-> port? (-> any) any)])
- wiki-name default-locale useful-links active-dsn)
+ wiki-name default-locale useful-links active-dsn http-port)
 
 (define/contract wiki-name (parameter/c string?)
   (make-parameter "Lambdawiki"))
@@ -17,6 +17,9 @@
 (define/contract active-dsn (parameter/c (or/c #f data-source?))
   (make-parameter #f))
 
+(define/contract http-port (parameter/c exact-integer?)
+  (make-parameter 8080))
+
 (define (with-config port f)
   (parameterize ()
     (for ([entry (in-port read port)])
@@ -25,6 +28,7 @@
         [`(default-locale ,locale) (default-locale locale)]
         [`(useful-links ,links)    (useful-links links)]
         [`(data-source ,src)       (active-dsn (apply data-source src))]
+        [`(port ,port)             (http-port port)]
         [_                         (error 'config "Unknown form: ~a" entry)]))
     (f)))
 
