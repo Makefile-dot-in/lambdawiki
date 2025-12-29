@@ -2,6 +2,8 @@
 (require forms
          threading
          (prefix-in srfi1: srfi/1)
+         net/url
+         net/uri-codec
          web-server/dispatch
          web-server/http/xexpr
          web-server/http/redirect
@@ -26,11 +28,14 @@
          new-article-url
          edit-article-url
          url-to-article-revisions
-         url-to-article-revision)
+         url-to-article-revision
+         wiki-by-id)
 
 (define-values (article-servlet article-url)
   (dispatch-rules
    [("") (λ (_) (redirect-to (url-to-article (main-page)) see-other))]
+   [("wiki-by-id" (number-arg) (string-arg) ...)
+    article-id-redirect]
    [("wiki" (string-arg)) view-article]
    [("wiki" (string-arg) "raw") view-article-raw]
    [("wiki" (string-arg) "edit") #:method (or "get" "post")
@@ -49,6 +54,15 @@
 (register-article-permission! 'class/add "Add class")
 (register-article-permission! 'class/remove "Remove class")
 
+(define (article-id-redirect _req id path)
+  (define u (string->url "/wiki"))
+  (define article (get-article-from-id id))
+  (redirect-to
+   (format "/wiki/~a/~a"
+           (uri-encode (article-name article))
+           (string-join (map uri-encode path) "/"))
+   see-other))
+
 (define (view-article _req name)
   (call-with-transaction
    (λ ()
@@ -58,6 +72,7 @@
      (when (not (article-rendering article))
        (let ([rendering (render-content-type
                          (article-content_type article)
+                         (article-id article)
                          (article-source article))])
          (add-rendering-for-article! (article-id article) rendering)
          (set-article-rendering! article rendering)))
@@ -91,7 +106,7 @@
       [(#f #f _) (err `((source . ,($ mandatory-field))))]
       [(#t _ #f) (err `((file . ,($ mandatory-field))))]
       [(#f s _) (cons type (string->bytes/utf-8 s))]
-      [(#t _ f) (cons type f)])))
+      [(#t _ f) (cons type (binding:file-content f))])))
 
 (define (article-title-and-class-subform)
   (form* ([title (ensure binding/text (shorter-than 50))]
@@ -210,6 +225,7 @@
   (when (not (full-revision-rendering revision))
     (let ([rendering (render-content-type
                       (full-revision-content-type-id revision)
+                      (full-revision-article-id revision)
                       (full-revision-source revision))])
       (add-revision-rendering! id rendering)
       (set-full-revision-rendering! revision rendering)))
@@ -222,3 +238,5 @@
   (curry article-url article-revisions))
 (define url-to-article-revision
   (curry article-url article-revision))
+(define (wiki-by-id id . segments)
+  (article-url article-id-redirect id segments))

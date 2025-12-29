@@ -91,7 +91,8 @@
     ([id "article-page"])
     (h1 ,title)
     (form
-     ([method "post"])
+     ([method "post"]
+      [enctype "multipart/form-data"])
      ,@(if (not errors) null
            `((ul ([class "error"])
                  ,@(for/list ([e errors]) `(li ,e)))))

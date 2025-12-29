@@ -143,7 +143,7 @@
 (define (sandbox-scribble-reader src)
   (list (reader:read-syntax-inside src)))
 
-(define (renderer bytes)
+(define (renderer _article-id bytes)
   (define text (bytes->string/utf-8 bytes #\�))
   (with-limits 3 256
     (parameterize ([sandbox-reader sandbox-scribble-reader])

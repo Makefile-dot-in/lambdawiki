@@ -7,10 +7,13 @@
 
 (provide
  (contract-out
-  [register-content-type! (-> string? string? (-> bytes? (listof xexpr?))
-                              #:binary boolean?
+  [register-content-type! (->* [string?
+                                string?
+                                (-> snowflake? bytes? (listof xexpr?))
+                                #:binary boolean?]
+                               [#:mime-type bytes?]
                               any)]
-  [render-content-type (-> snowflake? bytes? (listof xexpr?))]
+  [render-content-type (-> snowflake? snowflake? bytes? (listof xexpr?))]
   [content-type-mime (-> snowflake? bytes?)]))
 
 (define textid-registry (make-hash))
@@ -38,5 +41,5 @@
   (or (and~> id-registry (hash-ref id) registry-entry-mime)
       #"application/octet-stream"))
 
-(define (render-content-type id source)
-  (~> id-registry (hash-ref id) registry-entry-renderer (_ source)))
+(define (render-content-type id article-id source)
+  (~> id-registry (hash-ref id) registry-entry-renderer (_ article-id source)))
