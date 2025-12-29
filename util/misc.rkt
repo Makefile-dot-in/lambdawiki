@@ -38,7 +38,7 @@
       (inner conn req))))
 
 (define (request-query-param req param)
-  (and~> req request-uri url-query (assoc param _)))
+  (and~> req request-uri url-query (assoc param _) cdr))
 
 ;; adds the given query paramer to the url
 (define (url-with-params old-url params)

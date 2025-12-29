@@ -9,6 +9,7 @@
          "../config.rkt"
          "../util/db.rkt"
          "../util/misc.rkt"
+         "../util/session.rkt"
          "../util/permissions.rkt"
          "../renderers/main.rkt"
          "../models/article.rkt"
@@ -38,6 +39,7 @@
 (register-article-permission! 'general/read "Read articles")
 (register-article-permission! 'general/create "Create articles")
 (register-article-permission! 'general/write "Write articles")
+(register-article-permission! 'general/move "Move articles")
 (register-article-permission! 'class/add "Add class")
 (register-article-permission! 'class/remove "Remove class")
 
@@ -118,6 +120,8 @@
     [(list _ _ render-widget)
      (response/xexpr (renderer render-widget))]))
 
+(define (current-author req)
+  (or (current-user) (request-client-ip req)))
 
 (define (create-article req)
   (article-edit-form
@@ -128,8 +132,9 @@
         (check-authorization-for-class 'general/create all-class)
         (for-each (curry check-authorization-for-class 'class/add)
                   classes)
-        (~> (create-article! title ctid content)
-            (set-article-classes! classes)))))))
+        (define id (create-article! title ctid content))
+        (set-article-classes! id classes)
+        (create-revision! id (current-author req) content))))))
 
 (define (edit-article req name)
   (call-with-transaction
@@ -159,16 +164,22 @@
         (for-each (curry check-authorization-for-class 'class/add)
                   (srfi1:lset-difference equal? classes old-classes))
 
+        (when (not (equal? title old-title))
+          (check-authorization-for-article 'general/move id))
+
         (edit-article! id title ctid content)
-        (set-article-classes! id classes))))))
+        (set-article-classes! id classes)
+        (create-revision! id (current-author req) content))))))
 
 (define (article-revisions req name)
   (define articleval (get-article-from-path name))
   (when (not articleval) (not-found name))
   (define id (article-id articleval))
 
-  (define offset (or (request-query-param req 'offset) 0))
-  (define limit (or (request-query-param req 'limit) 50))
+  (define offset (or (and~> (request-query-param req 'offset)
+                            string->number) 0))
+  (define limit (or (and~> (request-query-param req 'limit)
+                           string->number) 50))
 
   (define-values (num-revisions revisions)
     (get-revisions-for-article id #:limit limit #:offset offset))

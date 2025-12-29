@@ -57,4 +57,4 @@
      (tr ,@(map (curry list 'th) headers)))
     (tbody
      ,@(for/list ([r rows])
-         (map (curry list 'td) r)))))
+         `(tr ,@(map (curry list 'td) r))))))

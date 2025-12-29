@@ -154,8 +154,6 @@
     ($ article-edit-submit)
     render-widget errors)))
 
-(define (check-xexpr x) (println (xexpr? x)) x)
-
 (define (article-revisions-view title count limit offset revisions)
   (article-base-template
    ($ article-revisions ,title)
@@ -165,7 +163,7 @@
 
      (h1 ,($ article-revisions ,title))
      ,@(if (not count) null
-           `(p ,($ found-revisions ,count)))
+           `((p ,($ found-revisions ,count))))
      ,(generate-table
        (list ($ article-revisions-time)
              ($ article-revisions-author)
@@ -185,10 +183,11 @@
        ,(format "~a:" ($ article-revisions-limit-label))
        (select
         ([name "limit"])
-        ,@(for/list ([l '("25" "50" "100")])
+        ,@(for/list ([l '(25 50 100)])
+            (define lstr (number->string l))
             (if (equal? l limit)
-                `(option ([value ,l] [selected ""]) ,l)
-                `(option ([value ,l]) ,l)))))
+                `(option ([value ,lstr] [selected "selected"]) ,lstr)
+                `(option ([value ,lstr]) ,lstr)))))
 
       (input ([type "submit"]
               [value ,($ article-revisions-limit-submit)])))

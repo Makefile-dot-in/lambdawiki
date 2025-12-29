@@ -39,6 +39,9 @@
 @article-revisions-limit-submit[()]{Apply}
 @article-revisions-next[()]{next}
 @article-revisions-prev[()]{prev}
+@found-revisions[(#f)]{Found no revisions}
+@found-revisions[(1)]{Found 1 revision}
+@found-revisions[(,n)]{Found @n revisions}
 @article-links-page[()]{page}
 @article-links-revisions[()]{page history}
 @article-links-edit[()]{edit}
