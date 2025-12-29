@@ -37,7 +37,7 @@
 (define/match (vector->full-revision _v)
   [((vector id article-id ctid source rendering
             anon-ip (? sql-null?) (? sql-null?)))
-   (full-revision id article-id anon-ip article-id ctid source
+   (full-revision id anon-ip article-id ctid source
                   (and~> rendering
                          sql-null->false
                          (call-with-input-string read)))]
