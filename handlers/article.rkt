@@ -6,6 +6,7 @@
          web-server/http/xexpr
          web-server/http/redirect
          web-server/http/request-structs
+         web-server/http/response-structs
          "../config.rkt"
          "../util/db.rkt"
          "../util/misc.rkt"
@@ -31,6 +32,7 @@
   (dispatch-rules
    [("") (λ (_) (redirect-to (url-to-article (main-page)) see-other))]
    [("wiki" (string-arg)) view-article]
+   [("wiki" (string-arg) "raw") view-article-raw]
    [("wiki" (string-arg) "edit") #:method (or "get" "post")
                                  edit-article]
    [("wiki" (string-arg) "revisions") article-revisions]
@@ -60,6 +62,14 @@
          (add-rendering-for-article! (article-id article) rendering)
          (set-article-rendering! article rendering)))
      (response/xexpr (article-view article)))))
+
+(define (view-article-raw _req name)
+  (define article (get-article-from-path name))
+  (when (not article) (not-found name))
+  (response/output
+   #:mime-type (content-type-mime (article-content_type article))
+   (λ (out)
+     (write-bytes (article-source article) out))))
 
 (struct form-submission (title classes type content))
 (define (maybe-binding/file f)

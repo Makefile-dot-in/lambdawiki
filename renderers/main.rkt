@@ -6,7 +6,8 @@
  (contract-out
   [load-renderers! (-> any)])
 
- render-content-type)
+ render-content-type
+ content-type-mime)
 
 (define-runtime-path module-path ".")
 (define (load-renderers!)
