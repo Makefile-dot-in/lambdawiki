@@ -23,7 +23,8 @@
 
 (define/match (exn:fail:sql:unique-name-violation? _n)
   [((struct* exn:fail:sql ([sqlstate (== unique-constraint-violation)]
-                           [info (app (curry assoc 'constraint) "unique_articles_name")])))
+                           [info (app (λ~> (assoc 'constraint _) cdr)
+                                      "unique_articles_name")])))
    #t]
   [(_) #f])
 
@@ -52,7 +53,7 @@
   (let ([id (new-snowflake)])
     (query-exec (insert #:into articles
                         #:set
-                        [id ,(new-snowflake)]
+                        [id ,id]
                         [name ,name]
                         [content_type ,content-type]
                         [source ,source]))
