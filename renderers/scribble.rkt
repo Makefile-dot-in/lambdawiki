@@ -1,5 +1,6 @@
 #lang racket
 (require threading
+         net/uri-codec
          racket/exn
          racket/sandbox
          racket/list/grouping
@@ -9,7 +10,8 @@
          "registry.rkt"
          "../i18n/utils.rkt")
 
-(lazy-require ["../handlers/article.rkt" (url-to-article)])
+(lazy-require ["../handlers/article.rkt" (url-to-article
+                                          url-to-article-raw)])
 
 (define (append-refs refpair ref)
   (set-mcar! refpair (+ 1 (mcar refpair)))
@@ -69,6 +71,13 @@
             (generate-row refs secs 'td alignments row))))]
     [`(link ,target . ,appearance)
      `(a ([href ,(url-to-article target)]) ,@(recurse appearance))]
+    [`(image ,target ,alt)
+     `(img ([src ,(url-to-article-raw target)]
+            [alt ,alt]))]
+    [`(figure ,target . ,inner)
+     `(figure
+       ,@(recurse inner)
+       (figcaption ,@(recurse target)))]
     [(? string?) f]))
 
 (define (render-wikiscribble-elements refs secs lst)

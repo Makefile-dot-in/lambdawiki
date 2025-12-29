@@ -25,6 +25,7 @@
 
 (provide article-servlet
          url-to-article
+         url-to-article-raw
          new-article-url
          edit-article-url
          url-to-article-revisions
@@ -232,6 +233,7 @@
   (response/xexpr (article-revision-view name revision)))
 
 (define url-to-article (curry article-url view-article))
+(define url-to-article-raw (curry article-url view-article-raw))
 (define new-article-url (curry article-url create-article))
 (define edit-article-url (curry article-url edit-article))
 (define url-to-article-revisions

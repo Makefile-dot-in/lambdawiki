@@ -183,7 +183,20 @@ a {
         border: 1px solid black;
     }
 
-    #main-image {
-        max-width: 30rem;
+    img {
+        max-width: 20rem;
+        max-height: 20rem;
+    }
+
+    figure {
+        background-color: #eee;
+        border: 1px solid black;
+        float: right;
+        > * { margin: auto; }
+        figcaption {
+            margin-top: 0.3rem;
+        }
+        text-align: center;
+        padding: 0.4em;
     }
 }

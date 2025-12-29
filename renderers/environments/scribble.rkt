@@ -6,7 +6,7 @@
          (all-from-out scribble/reader)
          (rename-out [module-begin #%module-begin])
          bold italic section subsection ref
-         table link)
+         table link text image figure)
 
 (define-syntax (module-begin stx)
   (syntax-case stx ()
@@ -30,3 +30,11 @@
 
 (define (link target . appearance)
   `(link ,target . ,(if (null? appearance) (list target) appearance)))
+
+(define text list)
+
+(define (figure caption . appearance)
+  `(figure ,caption . ,appearance))
+
+(define (image target [alt target])
+  `(image ,target ,alt))
