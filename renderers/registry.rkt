@@ -14,7 +14,8 @@
                                [#:mime-type bytes?]
                               any)]
   [render-content-type (-> snowflake? snowflake? bytes? (listof xexpr?))]
-  [content-type-mime (-> snowflake? bytes?)]))
+  [content-type-mime (-> snowflake? bytes?)]
+  [content-type-human-name (-> snowflake? string?)]))
 
 (define textid-registry (make-hash))
 (define id-registry (make-hash))
@@ -40,6 +41,9 @@
 (define (content-type-mime id)
   (or (and~> id-registry (hash-ref id) registry-entry-mime)
       #"application/octet-stream"))
+
+(define (content-type-human-name id)
+  (~> id-registry (hash-ref id) registry-entry-human-name))
 
 (define (render-content-type id article-id source)
   (~> id-registry (hash-ref id) registry-entry-renderer (_ article-id source)))

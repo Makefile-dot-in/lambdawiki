@@ -18,7 +18,8 @@
          "../models/user.rkt"
          "../models/article.rkt"
          "../models/revisions.rkt"
-         "../models/content-types.rkt")
+         "../models/content-types.rkt"
+         "../renderers/main.rkt")
 
 (provide
  (contract-out
@@ -33,7 +34,12 @@
                               exact-integer? exact-integer?
                               (listof article-revision?)
                               xexpr?)]
-  [article-revision-view (-> string? full-revision? xexpr?)]))
+  [article-revision-view (-> string? full-revision? xexpr?)]
+  [article-search-view (-> string? (listof article?)
+                           #:count (or/c #f exact-integer?)
+                           #:offset exact-integer?
+                           #:limit exact-integer?
+                           xexpr?)]))
 
 (lazy-require ["../handlers/article.rkt"
                (url-to-article
@@ -211,36 +217,11 @@
                     ,(format
                       "[~a]" ($ article-revisions-action-view)))))))
 
-     (form
-      ([method "get"])
-      (label
-       ,(format "~a:" ($ article-revisions-limit-label))
-       (select
-        ([name "limit"])
-        ,@(for/list ([l '(25 50 100)])
-            (define lstr (number->string l))
-            (if (equal? l limit)
-                `(option ([value ,lstr] [selected "selected"]) ,lstr)
-                `(option ([value ,lstr]) ,lstr)))))
-
-      (input ([type "submit"]
-              [value ,($ article-revisions-limit-submit)])))
-     
-     ,@(if (equal? offset 0) null
-           `((a ([href
-                  ,(url-with-params
-                    ""
-                    `((offset . ,(max 0 (- limit offset)))
-                      (limit . ,limit)))])
-                ,(format "[~a]" ($ article-revisions-next)))))
-
-     ,@(if (offset . < . (+ limit offset)) null
-           `((a ([href
-                  ,(url-with-params
-                    ""
-                    `((offset . ,(max 0 (+ limit offset)))
-                      (limit . ,limit)))])
-                ,(format "[~a]" ($ article-revisions-prev))))))))
+     ,@(pagination-controls
+        #:limit limit
+        #:offset offset
+        #:count count
+        #:per-page-label ($ article-revisions-limit-label)))))
 
 (define (article-revision-view title revision)
   (define page-title
@@ -254,3 +235,26 @@
      ([id "article-view"])
      (h1 ([id "article-title"]) ,page-title)
      (article ,@(full-revision-rendering revision)))))
+
+(define (article-search-view query results #:count count #:offset offset #:limit limit)
+  (base-template
+   ($ search-results ,query)
+   #:search-query query
+   `(main
+     ([id "search-results"])
+     (h1 ,($ search-results ,query))
+     (p ,($ found-articles ,count))
+     ,(generate-table
+       (list ($ search-article-name)
+             ($ search-article-type))
+       (for/list ([r results])
+         (list
+          `(a ([href ,(url-to-article (article-name r))])
+              ,(article-name r))
+          (content-type-human-name
+           (article-content_type r)))))
+     ,@(pagination-controls
+        #:limit limit
+        #:offset offset
+        #:count count
+        #:per-page-label ($ article-search-limit-label)))))

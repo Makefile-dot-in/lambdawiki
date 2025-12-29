@@ -44,7 +44,8 @@
    [("wiki" (string-arg) "revisions") article-revisions]
    [("wiki" (string-arg) "revision" (number-arg)) article-revision]
    [("new-article") #:method (or "get" "post")
-                    create-article]))
+                    create-article]
+   [("search") article-search]))
 
 (register-article-permission! 'general/read "Read articles")
 (register-article-permission! 'general/create "Create articles")
@@ -217,13 +218,30 @@
   (define offset (or (and~> (request-query-param req 'offset)
                             string->number) 0))
   (define limit (or (and~> (request-query-param req 'limit)
-                           string->number) 50))
+                           string->number (min 100)) 50))
 
   (define-values (num-revisions revisions)
     (get-revisions-for-article id #:limit limit #:offset offset))
 
   (response/xexpr (article-revisions-view
                    name num-revisions limit offset revisions)))
+
+(define (article-search req)
+  (define query (or (request-query-param req 'q) ""))
+  (define offset (or (and~> (request-query-param req 'offset) string->number) 0))
+  (define limit (or (and~> (request-query-param req 'limit)
+                           string->number (min 100))
+                    25))
+
+  (define-values (num-results results)
+    (article-full-text-search query #:limit limit #:offset offset))
+
+  (response/xexpr
+   (article-search-view
+    query results
+    #:count num-results
+    #:limit limit
+    #:offset offset)))
 
 (define (article-revision _req name id)
   (define revision (get-full-article-revision id))

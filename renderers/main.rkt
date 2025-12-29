@@ -7,7 +7,8 @@
   [load-renderers! (-> any)])
 
  render-content-type
- content-type-mime)
+ content-type-mime
+ content-type-human-name)
 
 (define-runtime-path module-path ".")
 (define (load-renderers!)

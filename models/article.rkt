@@ -12,7 +12,13 @@
   [get-article-from-id (-> snowflake? (or/c #f article?))]
   [add-rendering-for-article! (-> snowflake? (listof xexpr?) any)]
   [create-article! (-> string? snowflake? bytes? snowflake?)]
-  [edit-article! (-> snowflake? string? snowflake? bytes? any)])
+  [edit-article! (-> snowflake? string? snowflake? bytes? any)]
+  [article-full-text-search (-> string?
+                                #:limit exact-integer?
+                                #:offset exact-integer?
+                                (values
+                                 (or/c exact-integer? #f)
+                                 (listof article?)))])
  exn:fail:sql:unique-name-violation?)
 
 (struct article (id name content_type source rendering) #:mutable)
@@ -67,3 +73,17 @@
                       [content_type ,content-type]
                       [source ,source]
                       [rendering ,sql-null])))
+
+(define (article-full-text-search query #:limit limit #:offset offset)
+  (define res
+    (query-rows
+     (select #:from articles
+             #:limit ,limit
+             #:offset ,offset
+             #:where (@@ (to_tsvector name)
+                         (to_tsquery ,query))
+             #:values
+             (ScalarExpr:INJECT ,"count(*) over()")
+             id name content_type source rendering)))
+  (values (and (pair? res) (~> res car (vector-ref 0)))
+          (map (compose vector->article (curryr vector-drop 1)) res)))

@@ -38,9 +38,9 @@
 @article-revisions-author[()]{Author}
 @article-revisions-actions[()]{Actions}
 @article-revisions-limit-label[()]{Revisions per page}
-@article-revisions-limit-submit[()]{Apply}
-@article-revisions-next[()]{next}
-@article-revisions-prev[()]{prev}
+@page-limit-submit[()]{Apply}
+@page-next[()]{next}
+@page-prev[()]{prev}
 @article-revisions-action-view[()]{view}
 @found-revisions[(#f)]{Found no revisions}
 @found-revisions[(1)]{Found 1 revision}
@@ -57,3 +57,10 @@
 @rendering-error[()]{Rendering error}
 @revision-title[(,number ,author)]{Revision @number by @author}
 @class-add-button[()]{Add class}
+@found-articles[(#f)]{Found no articles}
+@found-articles[(1)]{Found 1 article}
+@found-articles[(,count)]{Found @count articles}
+@article-search-limit-label[()]{Articles per page}
+@search-results[(,query)]{Results for @query}
+@search-article-name[()]{Article name}
+@search-article-type[()]{Article type}

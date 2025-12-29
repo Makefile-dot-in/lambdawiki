@@ -8,13 +8,20 @@
 
 (provide
  (contract-out
-  [base-template (string? xexpr? . -> . xexpr?)]
+  [base-template (->* [string? xexpr?]
+                      [#:search-query string?]
+                      xexpr?)]
   [generate-table (->* [(listof xexpr?) (listof (listof xexpr?))]
                        [#:id (or/c #f string?)]
-                       xexpr?)]))
+                       xexpr?)]
+  [pagination-controls (-> #:limit exact-integer?
+                           #:offset exact-integer?
+                           #:count (or/c #f exact-integer?)
+                           #:per-page-label string?
+                           (listof xexpr?))]))
 
 ;; Basic template for displaying the view
-(define (base-template title content)
+(define (base-template title content #:search-query [search-query ""])
   `(html
     (head (title ,(format "~a : ~a" title (wiki-name)))
           (meta ([charset "utf-8"]))
@@ -45,7 +52,10 @@
        (section ([id "search"])
          (form ([method "GET"] [action "/search"])
                (label ([for "search-box"]) ,(format "~a:" ($ search-label)))
-               (input ([type "text"] [name "q"] [id "search-box"]))
+               (input ([type "text"]
+                       [name "q"]
+                       [id "search-box"]
+                       [value ,search-query]))
                (input ([type "submit"] [value ,($ search-go)])))))
 
      (div ([id "content"])
@@ -58,3 +68,41 @@
     (tbody
      ,@(for/list ([r rows])
          `(tr ,@(map (curry list 'td) r))))))
+
+(define (pagination-controls
+         #:limit limit
+         #:offset offset
+         #:count count
+         #:per-page-label label)
+  `((form
+     ([method "get"])
+     (label
+      ,(format "~a:" label)
+      (select
+          ([name "limit"])
+        ,@(for/list ([l '(25 50 100)])
+            (define lstr (number->string l))
+            (if (equal? l limit)
+                `(option ([value ,lstr] [selected "selected"]) ,lstr)
+                `(option ([value ,lstr]) ,lstr)))))
+
+     (input ([type "submit"]
+             [value ,($ page-limit-submit)]))
+
+     (div 
+      ,@(if (equal? offset 0) null
+            `((a ([href
+                   ,(url-with-params
+                     ""
+                     `((offset . ,(number->string (max 0 (- limit offset))))
+                       (limit . ,(number->string limit))))])
+                 ,(format "[~a]" ($ page-prev)))))
+      
+
+      ,@(if (or (not count) ((+ limit offset) . >= . count)) null
+            `((a ([href
+                   ,(url-with-params
+                     ""
+                     `((offset . ,(number->string (max 0 (+ limit offset))))
+                       (limit . ,(number->string limit))))])
+                 ,(format "[~a]" ($ page-next)))))))))

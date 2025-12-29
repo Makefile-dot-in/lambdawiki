@@ -101,6 +101,6 @@
              users.id
              users.username)))
 
-  (values (if (null? res) #f (~> res car (vector-ref 0)))
+  (values (and (pair? res) (~> res car (vector-ref 0)))
           (map vector->article-revision res)))
 
