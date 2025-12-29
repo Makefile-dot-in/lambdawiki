@@ -7,6 +7,8 @@
 @error-description[(unauthorized)]{You are not authorized to access this resource.}
 @error-short[(internal-error)]{Internal server error}
 @error-description[(internal-error)]{Your request could not be processed due to an internal server error.}
+@error-short[(revision-not-found)]{Not found}
+@error-description[(revision-not-found)]{The requested revision was not found.}
 
 @search-label[()]{Search}
 @useful-links[()]{Useful links}
@@ -39,6 +41,7 @@
 @article-revisions-limit-submit[()]{Apply}
 @article-revisions-next[()]{next}
 @article-revisions-prev[()]{prev}
+@article-revisions-action-view[()]{view}
 @found-revisions[(#f)]{Found no revisions}
 @found-revisions[(1)]{Found 1 revision}
 @found-revisions[(,n)]{Found @n revisions}
@@ -52,3 +55,4 @@
 @table-of-contents[()]{Table of contents}
 @article-introduction[()]{Introduction}
 @rendering-error[()]{Rendering error}
+@revision-title[(,number ,author)]{Revision @number by @author}

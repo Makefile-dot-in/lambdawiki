@@ -32,12 +32,17 @@
   [article-revisions-view (-> string? (or/c #f exact-integer?)
                               exact-integer? exact-integer?
                               (listof article-revision?)
-                              xexpr?)]))
+                              xexpr?)]
+  [article-revision-view (-> string? full-revision? xexpr?)]))
 
 (lazy-require ["../handlers/article.rkt"
-               (url-to-article edit-article-url url-to-article-revisions)])
+               (url-to-article
+                edit-article-url
+                url-to-article-revisions
+                url-to-article-revision)])
 
-(define (article-base-template title article-title body)
+(define/contract (article-base-template title article-title body)
+  (-> string? string? xexpr? xexpr?)
   (base-template
    title
    `(div
@@ -45,9 +50,9 @@
      (nav
       (ul
        ,@(for/list ([link `((l article-links-page
-                             ,(url-to-article article-title))
+                               ,(url-to-article article-title))
                             (1r article-links-edit
-                             ,(edit-article-url article-title))
+                                ,(edit-article-url article-title))
                             (r article-links-revisions
                                ,(url-to-article-revisions article-title)))])
            (match-define (list align key url) link)
@@ -175,7 +180,11 @@
                (match (article-revision-author r)
                  [(struct user (_ username)) username]
                  [ip ip])
-               "[placeholder]")))
+               `(div
+                 (a ([href ,(url-to-article-revision
+                                  title (article-revision-id r))])
+                    ,(format
+                      "[~a]" ($ article-revisions-action-view)))))))
 
      (form
       ([method "get"])
@@ -207,3 +216,16 @@
                     `((offset . ,(max 0 (+ limit offset)))
                       (limit . ,limit)))])
                 ,(format "[~a]" ($ article-revisions-prev))))))))
+
+(define (article-revision-view title revision)
+  (define page-title
+    ($ revision-title ,(article-revision-id revision)
+       ,(match (article-revision-author revision)
+          [(user _ username) username]
+          [(and ip (? string?)) ip])))
+  (article-base-template
+   page-title title
+   `(main
+     ([id "article-view"])
+     (h1 ([id "article-title"]) ,page-title)
+     (article ,@(full-revision-rendering revision)))))

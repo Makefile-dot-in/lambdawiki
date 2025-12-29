@@ -24,15 +24,17 @@
          url-to-article
          new-article-url
          edit-article-url
-         url-to-article-revisions)
+         url-to-article-revisions
+         url-to-article-revision)
 
 (define-values (article-servlet article-url)
   (dispatch-rules
-   [("") (λ (req) (redirect-to (url-to-article (main-page)) see-other))]
+   [("") (λ (_) (redirect-to (url-to-article (main-page)) see-other))]
    [("wiki" (string-arg)) view-article]
    [("wiki" (string-arg) "edit") #:method (or "get" "post")
                                  edit-article]
    [("wiki" (string-arg) "revisions") article-revisions]
+   [("wiki" (string-arg) "revision" (number-arg)) article-revision]
    [("new-article") #:method (or "get" "post")
                     create-article]))
 
@@ -40,6 +42,8 @@
 (register-article-permission! 'general/create "Create articles")
 (register-article-permission! 'general/write "Write articles")
 (register-article-permission! 'general/move "Move articles")
+(register-article-permission! 'revision/list "List revisions")
+(register-article-permission! 'revision/read "Read a revision")
 (register-article-permission! 'class/add "Add class")
 (register-article-permission! 'class/remove "Remove class")
 
@@ -175,6 +179,7 @@
   (define articleval (get-article-from-path name))
   (when (not articleval) (not-found name))
   (define id (article-id articleval))
+  (check-authorization-for-article 'revision/list id)
 
   (define offset (or (and~> (request-query-param req 'offset)
                             string->number) 0))
@@ -187,8 +192,23 @@
   (response/xexpr (article-revisions-view
                    name num-revisions limit offset revisions)))
 
+(define (article-revision _req name id)
+  (define revision (get-full-article-revision id))
+  (when (not revision) (revision-not-found id))
+
+  (check-authorization-for-article 'revision/read id)
+  (when (not (full-revision-rendering revision))
+    (let ([rendering (render-content-type
+                      (full-revision-content-type-id revision)
+                      (full-revision-source revision))])
+      (add-revision-rendering! id rendering)
+      (set-full-revision-rendering! revision rendering)))
+  (response/xexpr (article-revision-view name revision)))
+
 (define url-to-article (curry article-url view-article))
 (define new-article-url (curry article-url create-article))
 (define edit-article-url (curry article-url edit-article))
 (define url-to-article-revisions
   (curry article-url article-revisions))
+(define url-to-article-revision
+  (curry article-url article-revision))

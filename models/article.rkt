@@ -9,6 +9,7 @@
  (struct-out article)
  (contract-out
   [get-article-from-path (-> string? (or/c #f article?))]
+  [get-article-from-id (-> snowflake? (or/c #f article?))]
   [add-rendering-for-article! (-> snowflake? (listof xexpr?) any)]
   [create-article! (-> string? snowflake? bytes? snowflake?)]
   [edit-article! (-> snowflake? string? snowflake? bytes? any)])
@@ -30,6 +31,14 @@
   (and~> (query-maybe-row
           (select #:from articles
                   #:where (= name ,name)
+                  #:values id name content_type source rendering))
+
+         vector->article))
+
+(define (get-article-from-id id)
+  (and~> (query-maybe-row
+          (select #:from articles
+                  #:where (= id ,id)
                   #:values id name content_type source rendering))
 
          vector->article))

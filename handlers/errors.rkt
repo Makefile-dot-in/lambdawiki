@@ -28,6 +28,7 @@
 (define-exn-values exn-values
   [(struct exn:dispatcher _) 404 no-handler]
   [(struct exn:fail:article-not-found _) 404 article-not-found]
+  [(struct exn:fail:revision-not-found _) 404 revision-not-found]
   [(struct exn:fail:unauthorized _) 403 unauthorized]
   [_ 500 internal-error])
 

@@ -9,7 +9,7 @@
 (provide
  (contract-out
   [base-template (string? xexpr? . -> . xexpr?)]
-  [generate-table (->* [(listof string?) (listof (listof string?))]
+  [generate-table (->* [(listof xexpr?) (listof (listof xexpr?))]
                        [#:id (or/c #f string?)]
                        xexpr?)]))
 
