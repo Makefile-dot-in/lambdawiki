@@ -156,4 +156,4 @@
             (render-output result))))))))
 
 (register-content-type! "scribble" "Wikiscribble" renderer
-                        #:binary #t)
+                        #:binary #f)
