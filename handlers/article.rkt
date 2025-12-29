@@ -45,6 +45,7 @@
    [("wiki" (string-arg) "revision" (number-arg)) article-revision]
    [("new-article") #:method (or "get" "post")
                     create-article]
+   [("all-articles") all-articles]
    [("search") article-search]))
 
 (register-article-permission! 'general/read "Read articles")
@@ -256,6 +257,20 @@
       (add-revision-rendering! id rendering)
       (set-full-revision-rendering! revision rendering)))
   (response/xexpr (article-revision-view name revision)))
+
+(define (all-articles req)
+  (define offset (or (and~> (request-query-param req 'offset) string->number) 0))
+  (define limit (or (and~> (request-query-param req 'limit)
+                           string->number (min 100))
+                    25))
+  (define-values (num-articles articles)
+    (article-all #:limit limit #:offset offset))
+  (response/xexpr
+   (article-all-view
+    articles
+    #:count num-articles
+    #:offset offset
+    #:limit limit)))
 
 (define url-to-article (curry article-url view-article))
 (define url-to-article-raw (curry article-url view-article-raw))

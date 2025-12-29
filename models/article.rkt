@@ -18,7 +18,12 @@
                                 #:offset exact-integer?
                                 (values
                                  (or/c exact-integer? #f)
-                                 (listof article?)))])
+                                 (listof article?)))]
+  [article-all (-> #:limit exact-integer?
+                   #:offset exact-integer?
+                   (values
+                    (or/c exact-integer? #f)
+                    (listof article?)))])
  exn:fail:sql:unique-name-violation?)
 
 (struct article (id name content_type source rendering) #:mutable)
@@ -82,6 +87,18 @@
              #:offset ,offset
              #:where (@@ (to_tsvector name)
                          (to_tsquery ,query))
+             #:values
+             (ScalarExpr:INJECT ,"count(*) over()")
+             id name content_type source rendering)))
+  (values (and (pair? res) (~> res car (vector-ref 0)))
+          (map (compose vector->article (curryr vector-drop 1)) res)))
+
+(define (article-all #:limit limit #:offset offset)
+  (define res
+    (query-rows
+     (select #:from articles
+             #:limit ,limit
+             #:offset ,offset
              #:values
              (ScalarExpr:INJECT ,"count(*) over()")
              id name content_type source rendering)))

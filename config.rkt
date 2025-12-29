@@ -13,7 +13,8 @@
   (make-parameter "en"))
 
 (define/contract useful-links (parameter/c (listof (cons/c string? string?)))
-  (make-parameter '(("Home" . "/"))))
+  (make-parameter '(("Home" . "/")
+                    ("All articles" . "/all-articles"))))
 
 (define/contract active-dsn (parameter/c (or/c #f data-source?))
   (make-parameter #f))

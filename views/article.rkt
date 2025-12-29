@@ -39,7 +39,12 @@
                            #:count (or/c #f exact-integer?)
                            #:offset exact-integer?
                            #:limit exact-integer?
-                           xexpr?)]))
+                           xexpr?)]
+  [article-all-view (-> (listof article?)
+                        #:count (or/c #f exact-integer?)
+                        #:offset exact-integer?
+                        #:limit exact-integer?
+                        xexpr?)]))
 
 (lazy-require ["../handlers/article.rkt"
                (url-to-article
@@ -236,25 +241,48 @@
      (h1 ([id "article-title"]) ,page-title)
      (article ,@(full-revision-rendering revision)))))
 
+(define (article-paginated-list
+         results
+         #:count count
+         #:offset offset
+         #:limit limit
+         #:title title)
+  `(main
+   ([id "article-list"])
+   (h1 ,title)
+   (p ,($ found-articles ,count))
+   ,(generate-table
+     (list ($ search-article-name)
+           ($ search-article-type))
+     (for/list ([r results])
+       (list
+        `(a ([href ,(url-to-article (article-name r))])
+            ,(article-name r))
+        (content-type-human-name
+         (article-content_type r)))))
+   ,@(pagination-controls
+      #:limit limit
+      #:offset offset
+      #:count count
+      #:per-page-label ($ article-search-limit-label))))
+
 (define (article-search-view query results #:count count #:offset offset #:limit limit)
   (base-template
    ($ search-results ,query)
    #:search-query query
-   `(main
-     ([id "search-results"])
-     (h1 ,($ search-results ,query))
-     (p ,($ found-articles ,count))
-     ,(generate-table
-       (list ($ search-article-name)
-             ($ search-article-type))
-       (for/list ([r results])
-         (list
-          `(a ([href ,(url-to-article (article-name r))])
-              ,(article-name r))
-          (content-type-human-name
-           (article-content_type r)))))
-     ,@(pagination-controls
-        #:limit limit
-        #:offset offset
-        #:count count
-        #:per-page-label ($ article-search-limit-label)))))
+   (article-paginated-list
+    results
+    #:title ($ search-results ,query)
+    #:count count
+    #:offset offset
+    #:limit limit)))
+
+(define (article-all-view results #:count count #:offset offset #:limit limit)
+  (base-template
+   ($ all-articles)
+   (article-paginated-list
+    results
+    #:title ($ all-articles)
+    #:count count
+    #:offset offset
+    #:limit limit)))
