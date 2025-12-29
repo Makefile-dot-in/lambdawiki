@@ -56,3 +56,4 @@
 @article-introduction[()]{Introduction}
 @rendering-error[()]{Rendering error}
 @revision-title[(,number ,author)]{Revision @number by @author}
+@class-add-button[()]{Add class}

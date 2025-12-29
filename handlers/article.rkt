@@ -136,9 +136,16 @@
                      (cdr body-subform))))
 
 
+(define (article-list-combine _k v1 v2)
+  (if (pair? v1)
+      (append v1 (list v2))
+      (list v1 v2)))
 (define (article-edit-form req renderer on-submit
                            #:defaults [defaults (hash)])
-  (match (form-run (create-form) req #:defaults defaults)
+  (match (form-run
+          (create-form) req
+          #:defaults defaults
+          #:combine article-list-combine)
     [`(passed ,(form-submission title classes type content) ,render-widget)
      (with-handlers
        ([exn:fail:sql:unique-name-violation?

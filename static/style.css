@@ -63,8 +63,8 @@ td, th {
 
 #content {
     padding: 10;
-    overflow-y: scroll;
-
+    overflow-y: auto;
+    height: 100vh;
     flex: 1;
 }
 
@@ -142,6 +142,11 @@ a {
 
         .article-content-upload {
             display: none;
+        }
+
+        .class-input {
+            padding: 0.3em;
+            text-color: black;
         }
     }
 }

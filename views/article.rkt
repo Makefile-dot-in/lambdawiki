@@ -119,13 +119,35 @@
                         ,(content-type-name ct)))))))
      ,@(render-body-subwidget "type" (widget-errors))
 
-     (label ,($ article-class)
-            (select ([id "class"])
-                    ,@(for/list ([class (get-article-classes)])
-                        `(option ([value
-                                   ,(number->string
-                                     (article-class-id class))])
-                                 ,(article-class-name class)))))
+     (label
+      ,($ article-class)
+      ,@(render-title-and-class-subwidget
+         "classes"
+         (λ (_name bindings _errors)
+           (cond
+             [(pair? bindings)
+              `(div ([id "class-list"])
+                    (for/list ([binding bindings])
+                      `(input
+                        ([type "text"]
+                         [class "class-input"]
+                         [value ,binding]
+                         [disabled "disabled"]))))]
+             [else null])))
+
+      (select ([id "class-select"])
+        ,@(for/list ([class (get-article-classes)])
+            `(option
+              ([value ,(number->string (article-class-id class))])
+              ,(article-class-name class))))
+
+      (button
+       ([id "add-class"]
+        [onclick "addClass()"]
+        [type "button"])
+       ,($ class-add-button)))
+
+     ,@(render-title-and-class-subwidget "classes" (widget-errors))
 
      (div ([class "article-content-section"])
           (label ,($ article-content)
@@ -141,7 +163,9 @@
           ,@(render-body-subwidget "file" (widget-errors)))
 
      (input ([type "submit"]
-             [value ,submitlbl])))))
+             [value ,submitlbl]))
+
+     (script ([src "/static/article-form.js"])))))
 
 (define (article-create render-widget [errors #f])
   (base-template
