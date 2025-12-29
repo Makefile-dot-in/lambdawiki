@@ -13,6 +13,7 @@
   [add-rendering-for-article! (-> snowflake? (listof xexpr?) any)]
   [create-article! (-> string? snowflake? bytes? snowflake?)]
   [edit-article! (-> snowflake? string? snowflake? bytes? any)]
+  [delete-article! (-> snowflake? any)]
   [article-full-text-search (-> string?
                                 #:limit exact-integer?
                                 #:offset exact-integer?
@@ -78,6 +79,9 @@
                       [content_type ,content-type]
                       [source ,source]
                       [rendering ,sql-null])))
+
+(define (delete-article! id)
+  (query-exec (delete #:from articles #:where (= id ,id))))
 
 (define (article-full-text-search query #:limit limit #:offset offset)
   (define res

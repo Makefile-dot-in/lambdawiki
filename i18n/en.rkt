@@ -65,3 +65,4 @@
 @search-article-name[()]{Article name}
 @search-article-type[()]{Article type}
 @all-articles[()]{Article list}
+@article-delete-button[()]{Delete article}

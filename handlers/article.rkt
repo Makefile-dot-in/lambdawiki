@@ -28,6 +28,7 @@
          url-to-article-raw
          new-article-url
          edit-article-url
+         delete-article-url
          url-to-article-revisions
          url-to-article-revision
          wiki-by-id)
@@ -41,6 +42,7 @@
    [("wiki" (string-arg) "raw") view-article-raw]
    [("wiki" (string-arg) "edit") #:method (or "get" "post")
                                  edit-article]
+   [("wiki" (string-arg) "delete") #:method "post" delete-article]
    [("wiki" (string-arg) "revisions") article-revisions]
    [("wiki" (string-arg) "revision" (number-arg)) article-revision]
    [("new-article") #:method (or "get" "post")
@@ -52,6 +54,7 @@
 (register-article-permission! 'general/create "Create articles")
 (register-article-permission! 'general/write "Write articles")
 (register-article-permission! 'general/move "Move articles")
+(register-article-permission! 'general/delete "Delete articles")
 (register-article-permission! 'revision/list "List revisions")
 (register-article-permission! 'revision/read "Read a revision")
 (register-article-permission! 'class/add "Add class")
@@ -88,6 +91,13 @@
    #:mime-type (content-type-mime (article-content_type article))
    (λ (out)
      (write-bytes (article-source article) out))))
+
+(define (delete-article _req name)
+  (define articleval (get-article-from-path name))
+  (when (not articleval) (not-found name))
+  (check-authorization-for-article 'general/delete (article-id articleval))
+  (call-with-transaction (λ () (delete-article! (article-id articleval))))
+  (redirect-to "/" see-other))
 
 (struct form-submission (title classes type content))
 (define (maybe-binding/file f)
@@ -276,6 +286,7 @@
 (define url-to-article-raw (curry article-url view-article-raw))
 (define new-article-url (curry article-url create-article))
 (define edit-article-url (curry article-url edit-article))
+(define delete-article-url (curry article-url delete-article))
 (define url-to-article-revisions
   (curry article-url article-revisions))
 (define url-to-article-revision

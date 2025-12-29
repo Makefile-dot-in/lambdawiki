@@ -49,6 +49,7 @@
 (lazy-require ["../handlers/article.rkt"
                (url-to-article
                 edit-article-url
+                delete-article-url
                 url-to-article-revisions
                 url-to-article-revision)])
 
@@ -92,7 +93,7 @@
       ,@(article-rendering article)))))
 
 (define (article-edit-render-form title submitlbl render-widget
-                                  [errors #f])
+                                  [errors #f] #:prelude [extra null])
   (define render-title-and-class-subwidget
     (widget-namespace "title-and-class-subform" render-widget))
   (define render-body-subwidget
@@ -101,6 +102,7 @@
   `(main
     ([id "article-page"])
     (h1 ,title)
+    ,@extra
     (form
      ([method "post"]
       [enctype "multipart/form-data"])
@@ -117,17 +119,17 @@
               "type"
               (λ (name binding _errors)
                 `(select
-                  ([name ,name])
-                  ,@(for/list ([ct (get-content-types)])
-                      `(option
-                        ([value ,(number->string (content-type-id ct))]
-                         ,@(if (and binding (equal? (binding:form-value binding)
-                                                    (content-type-id ct)))
-                               '((selected "selected"))
-                               null)
-                         ,@(if (not (content-type-binary ct)) null
-                               '((data-binary ""))))
-                        ,(content-type-name ct)))))))
+                     ([name ,name])
+                   ,@(for/list ([ct (get-content-types)])
+                       `(option
+                         ([value ,(number->string (content-type-id ct))]
+                          ,@(if (and binding (equal? (binding:form-value binding)
+                                                     (content-type-id ct)))
+                                '((selected "selected"))
+                                null)
+                          ,@(if (not (content-type-binary ct)) null
+                                '((data-binary ""))))
+                         ,(content-type-name ct)))))))
      ,@(render-body-subwidget "type" (widget-errors))
 
      (label
@@ -191,6 +193,12 @@
    ($ edit-article)
    article-title
    (article-edit-render-form
+    #:prelude
+    `((form
+       ([action ,(delete-article-url article-title)]
+        [method "post"])
+
+       (input ([type "submit"] [value ,($ article-delete-button)]))))
     ($ edit-article)
     ($ article-edit-submit)
     render-widget errors)))
