@@ -1,5 +1,6 @@
 #lang racket
 (require threading
+         racket/exn
          racket/sandbox
          racket/list/grouping
          racket/runtime-path
@@ -146,14 +147,17 @@
   (define text (bytes->string/utf-8 bytes #\�))
   (with-limits 3 256
     (parameterize ([sandbox-reader sandbox-scribble-reader])
-      (define evaluator (make-evaluator environment-path text #:allow-for-require (list environment-path)))
-      (call-with-custodian-shutdown
-       (λ ()
-         (define result (evaluator 'output))
-         (call-in-sandbox-context
-          evaluator
-          (λ ()
-            (render-output result))))))))
+      (with-handlers
+        ([(λ (_) #t)
+          (λ (e) `(,($ rendering-error) (pre ,(exn->string e))))])
+        (define evaluator (make-evaluator environment-path text #:allow-for-require (list environment-path)))
+        (call-with-custodian-shutdown
+         (λ ()
+           (define result (evaluator 'output))
+           (call-in-sandbox-context
+            evaluator
+            (λ ()
+              (render-output result)))))))))
 
 (register-content-type! "scribble" "Wikiscribble" renderer
                         #:binary #f)

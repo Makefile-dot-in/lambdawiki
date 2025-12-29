@@ -51,3 +51,4 @@
 @article-create-sidelink[()]{Create an article}
 @table-of-contents[()]{Table of contents}
 @article-introduction[()]{Introduction}
+@rendering-error[()]{Rendering error}
