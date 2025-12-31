@@ -87,6 +87,7 @@
 (define (view-article-raw _req name)
   (define article (get-article-from-path name))
   (when (not article) (not-found name))
+  (check-authorization-for-article 'general/read (article-id article))
   (response/output
    #:mime-type (content-type-mime (article-content_type article))
    (λ (out)
