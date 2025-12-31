@@ -29,7 +29,7 @@
         (match-let* ([(list _ lang) m]
                      [localize (dynamic-require f 'localize)])
           (cons lang localize)))
-      (sort < #:key (compose string-length car))))
+      (sort >= #:key (compose string-length car))))
 
 ;; returns the entry for the language that matches lang the best
 ;; where best is being the longest prefix of lang-spec
