@@ -30,7 +30,7 @@
        (select
         #:from
         (left-join
-         (left-join
+         (full-join
           (as users_roles performer_users_roles)
           user_permissions
           #:on (= performer_users_roles.roleid user_permissions.performer))
@@ -86,50 +86,49 @@
       false? not))
 
 (define all-class 0)
-
 (define (has-article-permission? perm performer-user-id article-id)
   (define-values (category name) (symbol-to-category-and-name perm))
   (~> (query-maybe-value
        (select
-        #:from
-        (left-join
+           #:from
          (left-join
-          users_roles
-          article_permissions
-          #:on (= users_roles.userid article_permissions.performer))
-         article_classes
-         #:on (= article_classes.class article_permissions.subject))
+          (full-join
+           users_roles
+           article_permissions
+           #:on (= users_roles.roleid article_permissions.performer))
+          article_classes
+          #:on (= article_classes.class article_permissions.subject))
 
-        #:where
-        ; if the user has the root role, then they are allowed to do anything
-        (or (ScalarExpr:AST
-             ,(if performer-user-id
-                  (scalar-expr-qq
-                   (and (= users_roles.userid ,performer-user-id)
-                        (= users_roles.roleid ,root-role)))
-                  (scalar-expr-qq (ScalarExpr:INJECT ,"false"))))
+         #:where
+         ; if the user has the root role, then they are allowed to do anything
+         (or (ScalarExpr:AST
+              ,(if performer-user-id
+                   (scalar-expr-qq
+                    (and (= users_roles.userid ,performer-user-id)
+                         (= users_roles.roleid ,root-role)))
+                   (scalar-expr-qq (ScalarExpr:INJECT ,"false"))))
 
-            (and (or (ScalarExpr:AST
-                      ; if the user has been specified, then any permissions that have
-                      ; either the auth role as the performer or where the performer matches apply.
-                      ,(if performer-user-id
-                           (scalar-expr-qq
-                            (or (= users_roles.userid ,performer-user-id)
-                                (= article_permissions.performer ,auth-role)))
-                           (scalar-expr-qq (ScalarExpr:INJECT ,"false"))))
+             (and (or (ScalarExpr:AST
+                       ; if the user has been specified, then any permissions that have
+                       ; either the auth role as the performer or where the performer matches apply.
+                       ,(if performer-user-id
+                            (scalar-expr-qq
+                             (or (= users_roles.userid ,performer-user-id)
+                                 (= article_permissions.performer ,auth-role)))
+                            (scalar-expr-qq (ScalarExpr:INJECT ,"false"))))
 
-                     ; of course, any permission that has been granted to all users also applies.
-                     (= article_permissions.performer ,all-role))
+                      ; of course, any permission that has been granted to all users also applies.
+                      (= article_permissions.performer ,all-role))
 
-                 ; the subject also needs to match, of course
-                 (or (= article_classes.article ,article-id)
-                     (= article_permissions.subject ,all-class))
-                 (is-not-null article_permissions.perm)
-                 (= article_permissions.category ,category)
-                 (= article_permissions.name ,name)))
-        #:order-by article_permissions.priority #:desc article_permissions.id
-        #:limit 1
-        #:values (cast article_permissions.perm text)))
+                  ; the subject also needs to match, of course
+                  (or (= article_classes.article ,article-id)
+                      (= article_permissions.subject ,all-class))
+                  (is-not-null article_permissions.perm)
+                  (= article_permissions.category ,category)
+                  (= article_permissions.name ,name)))
+         #:order-by article_permissions.priority #:desc article_permissions.id
+         #:limit 1
+         #:values (cast article_permissions.perm text)))
       (or "deny")
       (member (list sql-null "allow"))
       false? not))
@@ -139,7 +138,7 @@
   (~> (query-maybe-value
        (select
         #:from
-        (left-join
+        (full-join
          users_roles
          article_permissions
          #:on (= users_roles.userid article_permissions.performer))
