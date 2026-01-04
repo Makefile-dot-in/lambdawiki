@@ -33,12 +33,8 @@
    (article id name content_type source (and~> rendering sql-null->false
                                                (call-with-input-string read)))])
 
-(define/match (exn:fail:sql:unique-name-violation? _n)
-  [((struct* exn:fail:sql ([sqlstate (== unique-constraint-violation)]
-                           [info (app (λ~> (assoc 'constraint _) cdr)
-                                      "unique_articles_name")])))
-   #t]
-  [(_) #f])
+(define exn:fail:sql:unique-name-violation?
+  (curry is-unique-name-violation? "unique_articles_name"))
 
 (define (get-article-from-path name)
   (and~> (query-maybe-row

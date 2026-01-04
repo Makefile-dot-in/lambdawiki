@@ -8,6 +8,7 @@
          web-server/http/redirect
          web-server/http/request-structs
          web-server/http/response-structs
+         "../config.rkt"
          "../util/db.rkt"
          "../util/misc.rkt"
          "../util/session.rkt"
@@ -26,11 +27,12 @@
 (define-values (user-servlet user-url)
   (dispatch-rules
    [("login") #:method (or "get" "post") login-page]
+   [("signup") #:method (or "get" "post") signup-page]
    [("signout") #:method "post" signout-page]))
 
 (define login-form
-  (form* ([username (ensure binding/text (required) (shorter-than 30) (longer-than 1))]
-          [password (ensure binding/text (required) (shorter-than 50) (longer-than 1))])
+  (form* ([username (ensure binding/text (required) (shorter-than 30))]
+          [password (ensure binding/text (required) (shorter-than 50))])
     (cons username (string->bytes/utf-8 password))))
 
 (define (login-page req)
@@ -61,6 +63,41 @@
              (response/xexpr (render-login-form render-widget (list ($ invalid-username-or-password)))))]
         [(list _ _ render-widget)
          (response/xexpr (render-login-form render-widget))])))
+
+(define signup-password
+  (form* ([password (ensure binding/text (required) (shorter-than 50))]
+          [password-confirmation (ensure binding/text (required) (shorter-than 50))])
+    (if (equal? password password-confirmation)
+        (ok password)
+        (err `((password-confirmation . ,($ passwords-do-not-match)))))))
+
+(define signup-form
+  (form* ([username (ensure binding/text (required) (shorter-than 30))]
+          [password signup-password])
+    (cons username (string->bytes/utf-8 password))))
+
+(define (signup-page req)
+  (when (not (signup-enabled))
+    (notify-signup-disabled))
+
+  (define redirect-url
+    (or (request-query-param req 'request-url) "/"))
+
+  (if (current-user)
+      (redirect-to redirect-url see-other)
+      (match (form-run signup-form req)
+        [`(passed (,username . ,password) ,render-widget)
+         (with-handlers ([exn:fail:sql:unique-username-violation?
+                          (λ (e)
+                            (response/xexpr
+                             (render-signup-form render-widget
+                                                 (list ($ user-already-exists)))))])
+           (call-with-transaction
+            (λ () (create-user! username password)))
+           (redirect-to (url-with-params (user-url login-page)
+                                         `((redirect-url . ,redirect-url))) see-other))]
+        [(list _ _ render-widget)
+         (response/xexpr (render-signup-form render-widget))])))
 
 (define (signout-page req)
   ;; we probably don't want to do something like challenge the user to authenticate

@@ -46,6 +46,10 @@
                          (input ([type "submit"] [class "link-input"] [value ,($ signout-link)]))))]
             [#f
              `(div ,($ login-status #f) " "
+                   ,@(if (not (signup-enabled)) null
+                         `((a ([href ,(url-with-params "/signup" `((redirect-to . ,(current-url))))])
+                              ,($ signup-link))
+                           " "))
                    (a ([href ,(url-with-params "/login" `((redirect-to . ,(current-url))))])
                       ,($ login-link)))]))
        

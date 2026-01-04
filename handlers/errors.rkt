@@ -30,6 +30,7 @@
   [(struct exn:fail:article-not-found _) 404 article-not-found]
   [(struct exn:fail:revision-not-found _) 404 revision-not-found]
   [(struct exn:fail:unauthorized _) 403 unauthorized]
+  [(struct exn:fail:signup-disabled _) 403 signup-disabled]
   [_ 500 internal-error])
 
 (define (http-error-responder _url err)

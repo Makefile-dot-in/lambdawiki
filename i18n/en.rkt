@@ -9,18 +9,24 @@
 @error-description[(internal-error)]{Your request could not be processed due to an internal server error.}
 @error-short[(revision-not-found)]{Not found}
 @error-description[(revision-not-found)]{The requested revision was not found.}
+@error-short[(signup-disabled)]{Sign up disabled}
+@error-description[(signup-disabled)]{Sign up is currently disabled by this wiki's configuration}
 
 @search-label[()]{Search}
 @useful-links[()]{Useful links}
 @search-go[()]{go}
 @login-title[()]{Log in}
 @login-submit[()]{Log in}
+@signup-submit[()]{Sign up}
 @login-username[()]{Username}
 @login-password[()]{Password}
+@signup-password-confirm[()]{Confirm password}
 @invalid-username-or-password[()]{Invalid username or password}
 @signout-link[()]{sign out}
 @login-link[()]{log in}
+@signup-link[()]{sign up}
 @login-header[(,wiki-name)]{Log in to @wiki-name}
+@signup-header[(,wiki-name)]{Sign up to @wiki-name}
 @login-status[(#f)]{not logged in}
 @login-status[(,name)]{logged in as @name}
 @mandatory-field[()]{Mandatory field}
@@ -66,3 +72,5 @@
 @search-article-type[()]{Article type}
 @all-articles[()]{Article list}
 @article-delete-button[()]{Delete article}
+@passwords-do-not-match[()]{Passwords do not match}
+@user-already-exists[()]{User already exists}

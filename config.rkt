@@ -4,7 +4,7 @@
  (contract-out
   [with-config (-> port? (-> any) any)])
  wiki-name default-locale useful-links active-dsn http-port
- main-page)
+ main-page signup-enabled)
 
 (define/contract wiki-name (parameter/c string?)
   (make-parameter "Lambdawiki"))
@@ -25,17 +25,21 @@
 (define/contract main-page (parameter/c string?)
   (make-parameter "Main Page"))
 
+(define/contract signup-enabled (parameter/c boolean?)
+  (make-parameter #f))
+
 (define (with-config port f)
   (parameterize ()
     (for ([entry (in-port read port)])
       (match entry
-        [`(wiki-name ,name)        (wiki-name name)]
-        [`(default-locale ,locale) (default-locale locale)]
-        [`(useful-links ,links)    (useful-links links)]
-        [`(data-source ,src)       (active-dsn (apply data-source src))]
-        [`(port ,port)             (http-port port)]
-        [`(main-page ,page)        (main-page page)]
-        [_                         (error 'config "Unknown form: ~a" entry)]))
+        [`(wiki-name ,name)         (wiki-name name)]
+        [`(default-locale ,locale)  (default-locale locale)]
+        [`(useful-links ,links)     (useful-links links)]
+        [`(data-source ,src)        (active-dsn (apply data-source src))]
+        [`(port ,port)              (http-port port)]
+        [`(main-page ,page)         (main-page page)]
+        [`(signup-enabled ,p)       (signup-enabled p)]
+        [_                          (error 'config "Unknown form: ~a" entry)]))
     (f)))
 
 

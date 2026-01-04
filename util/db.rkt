@@ -11,6 +11,7 @@
           exn:fail:sql?
           exn:fail:sql-info
           exn:fail:sql-sqlstate)
+         threading
          "../config.rkt")
 
 (provide
@@ -18,7 +19,8 @@
  (contract-out
   [current-connection (parameter/c (or/c #f connection?))]
   [create-connection (-> connection?)]
-  [with-connection-from-config (-> (-> any/c) any/c)])
+  [with-connection-from-config (-> (-> any/c) any/c)]
+  [is-unique-name-violation? (-> string? any/c boolean?)])
 
  ;; implicit versions of db's functions
  query-exec
@@ -39,14 +41,18 @@
  exn:fail:sql
  exn:fail:sql?
  exn:fail:sql-sqlstate
- exn:fail:sql-info
-
- unique-constraint-violation)
+ exn:fail:sql-info)
 
 (define current-connection
   (make-parameter #f))
 
 (define unique-constraint-violation "23505")
+
+(define (is-unique-name-violation? constraint-name e)
+  (and (exn:fail:sql? e)
+       (equal? (exn:fail:sql-sqlstate e) unique-constraint-violation)
+       (equal? (and~> (assoc 'constraint (exn:fail:sql-info e)) cdr)
+               constraint-name)))
 
 (define (create-connection)
   (virtual-connection

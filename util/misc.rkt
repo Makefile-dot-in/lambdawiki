@@ -8,6 +8,7 @@
 (provide
  (struct-out exn:fail:article-not-found)
  (struct-out exn:fail:revision-not-found)
+ (struct-out exn:fail:signup-disabled)
  (contract-out
   [hours->seconds (-> number? number?)]
   [days->seconds  (-> number? number?)]
@@ -17,7 +18,8 @@
   [revision-not-found (-> snowflake? any)]
   [contextualizing-dispatcher (-> dispatcher/c dispatcher/c)]
   [request-query-param (-> request? symbol? (or/c string? #f))]
-  [url-with-params (-> string? (listof (cons/c symbol? string?)) string?)]))
+  [url-with-params (-> string? (listof (cons/c symbol? string?)) string?)]
+  [notify-signup-disabled (-> any)]))
 
 (define (hours->seconds h) (* h 3600))
 (define (days->seconds  d) (hours->seconds (* d 24)))
@@ -28,6 +30,10 @@
 
 (struct exn:fail:article-not-found exn:fail (article-name))
 (struct exn:fail:revision-not-found exn:fail (revision-id))
+(struct exn:fail:signup-disabled exn:fail ())
+
+(define (notify-signup-disabled)
+  (raise (exn:fail:signup-disabled "signup disabled" (current-continuation-marks))))
 
 (define (not-found name)
   (raise (exn:fail:article-not-found

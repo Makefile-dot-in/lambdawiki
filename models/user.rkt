@@ -20,9 +20,14 @@
                          #:ip-address string?
                          #:user-agent string?]
                         session-id?)]
+  [create-user! (-> string? bytes? any)]
   [get-user-from-session (-> session-id? (or/c #f user?))]
   [check-username-password (-> string? bytes? (or/c #f user?))]
-  [delete-session! (-> session-id? any)]))
+  [delete-session! (-> session-id? any)]
+  [exn:fail:sql:unique-username-violation? (-> any/c boolean?)]))
+
+(define exn:fail:sql:unique-username-violation?
+  (curry is-unique-name-violation? "users_username_key"))
 
 (define session-id? bytes?)
 (define (start-user-services)
@@ -62,14 +67,23 @@
   [((vector id username))
    (user id username)])
 
+(define (create-user! username password)
+  (define password-hash (pwhash 'argon2id password '((t 1) (p 4) (m 6000))))
+  (query-exec
+   (sql (insert #:into users
+                #:set
+                [id ,(new-snowflake)]
+                [username ,username]
+                [pwhash ,(string->bytes/utf-8 password-hash)]))))
+
 (define (get-user-from-session session-id)
   (and~>
    (query-maybe-row
     (select
-     #:from (left-join sessions users
-                       #:on (= sessions.user_id users.id))
-     #:where (= sessions.session_id ,session-id)
-     #:values id username))
+        #:from (left-join sessions users
+                          #:on (= sessions.user_id users.id))
+        #:where (= sessions.session_id ,session-id)
+        #:values id username))
    vector->user))
 
 

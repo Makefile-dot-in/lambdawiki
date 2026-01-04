@@ -14,18 +14,24 @@
 @error-description[(internal-error)]{Jūsu pieprasījums nevarēja tikt apstrādāts iekšējas servera kļūdas dēļ}
 @error-short[(revision-not-found)]{Nav atrasts}
 @error-description[(revision-not-found)]{Pieprasītās izmaiņas nav atrastas.}
+@error-short[(signup-disabled)]{Reģistrēšanās atslēgta}
+@error-description[(signup-disabled)]{Šai viki nav iespējota reģistrēšanās}
 
 @search-label[()]{Meklēt}
 @useful-links[()]{Noderīgas saites}
 @search-go[()]{meklēt}
 @login-title[()]{Pieslēgties}
 @login-submit[()]{Pieslēgties}
+@signup-submit[()]{Izveidot kontu}
 @login-username[()]{Lietotājvārds}
 @login-password[()]{Parole}
+@signup-password-confirm[()]{Apstiprināt paroli}
 @invalid-username-or-password[()]{Nederīgs lietotājvārds vai parole}
 @signout-link[()]{Atteikties}
 @login-link[()]{pieslēgties}
+@signup-link[()]{reģistrēties}
 @login-header[(,wiki-name)]{Pieslēgties @wiki-name}
+@signup-header[(,wiki-name)]{Izveidot kontu @wiki-name}
 @login-status[(#f)]{nav pieslēdzies}
 @login-status[(,name)]{pieslēdzies kā @name}
 @mandatory-field[()]{Nepieciešams lauks}
@@ -71,3 +77,5 @@
 @search-article-type[()]{Tips}
 @all-articles[()]{Rakstu uzskaitījums}
 @article-delete-button[()]{Dzēst rakstu}
+@passwords-do-not-match[()]{Paroles nesakrīt}
+@user-already-exists[()]{Lietotājs jau pastāv}
