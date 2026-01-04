@@ -69,12 +69,19 @@
 
 (define (create-user! username password)
   (define password-hash (pwhash 'argon2id password '((t 1) (p 4) (m 6000))))
+  (define id (new-snowflake))
   (query-exec
    (sql (insert #:into users
                 #:set
-                [id ,(new-snowflake)]
+                [id ,id]
                 [username ,username]
-                [pwhash ,(string->bytes/utf-8 password-hash)]))))
+                [pwhash ,(string->bytes/utf-8 password-hash)])))
+  (query-exec
+   (sql (insert #:into roles
+                #:set
+                [id ,(new-snowflake)]
+                [name ,username]
+                [corresponding_user ,id]))))
 
 (define (get-user-from-session session-id)
   (and~>
