@@ -13,25 +13,31 @@
 (lazy-require ["../handlers/article.rkt" (url-to-article
                                           url-to-article-raw)])
 
+;; append a reference to the references section
 (define (append-refs refpair ref)
   (set-mcar! refpair (+ 1 (mcar refpair)))
   (set-mcdr! refpair (cons ref (mcdr refpair)))
   (mcar refpair))
 
+;; represents a structure entry
 (struct secent (number kind content) #:transparent)
 
+;; appends a section to the index used by the table of contents generator
 (define (append-section secpair section)
   (set-mcar! secpair (+ 1 (mcar secpair)))
   (set-mcdr! secpair (cons (secent (mcar secpair) 'section section)
                            (mcdr secpair)))
   (mcar secpair))
 
+;; appends a subsection to the index used by the table of contents generator
 (define (append-subsection secpair section)
   (set-mcar! secpair (+ 1 (mcar secpair)))
   (set-mcdr! secpair (cons (secent (mcar secpair) 'subsection section)
                            (mcdr secpair)))
   (mcar secpair))
 
+;; generates a row for tag elem, alignments alignments and data data,
+;; with context in refs and secs
 (define (generate-row refs secs elem alignments data)
   `(tr ,@(for/list ([cell data]
                     [alignment (in-sequences alignments (in-cycle '(left)))])
@@ -39,11 +45,12 @@
                               ['left "align-left"]
                               ['right "align-right"])])
                    ,@(cond
-                      [(list? cell)
-                       (render-wikiscribble-elements refs secs cell)]
-                      [else
-                       (list (render-wikiscribble-element refs secs cell))])))))
+                       [(list? cell)
+                        (render-wikiscribble-elements refs secs cell)]
+                       [else
+                        (list (render-wikiscribble-element refs secs cell))])))))
 
+;; renders the element with f into HTML
 (define (render-wikiscribble-element refs secs f)
   (define recurse (curry render-wikiscribble-elements refs secs))
   (match f
@@ -80,9 +87,12 @@
        (figcaption ,@(recurse target)))]
     [(? string?) f]))
 
+;; renders a list of Wikiscribble formatting directives
 (define (render-wikiscribble-elements refs secs lst)
   (map (curry render-wikiscribble-element refs secs) lst))
 
+;; adds a reference section to forms, given list of references refs
+;; and section mpair secpair
 (define (add-refs refs secpair forms)
   (if (null? refs) forms
       (begin
@@ -99,7 +109,7 @@
                                          (mcons 0 null))
                                   ref)))))))))))
 
-
+;; creates the table of contents, given the list of sections in secs
 (define (table-of-contents secs)
   `(div
     ([id "toc"])
@@ -134,12 +144,15 @@
           ['() '()])
          _)))))
 
+;; adds a table of contents in document from the section mpair secpair
 (define (add-toc secpair document)
   (match document
     [`((h2 . ,_) . ,_) (cons (table-of-contents secpair) document)]
     [(cons el els) (cons el (add-toc secpair els))]
     ['() '()]))
 
+;; composes all the functions to render the formatting directives in
+;; doc to HTML
 (define (render-output doc)
   (define refpair (mcons 0 null))
   (define secpair (mcons 0 null))
@@ -149,9 +162,12 @@
       ((λ (e) (add-toc (mcdr secpair) e)))))
 
 (define-runtime-path environment-path "environments/scribble.rkt")
+
+;; reads src into Wikiscribble
 (define (sandbox-scribble-reader src)
   (list (reader:read-syntax-inside src)))
 
+;; renders the given bytes into an HTML article
 (define (renderer _article-id bytes)
   (define text (bytes->string/utf-8 bytes #\�))
   (with-limits 3 256
