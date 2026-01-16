@@ -62,40 +62,59 @@ proc load_users {w} {
     }
 }
 
-proc create_user_form {} {
-    global user_form
+namespace eval forms {
+    variable counter 0
+}
+proc show_form {args} {
+    array set a $args
+    set var ::forms::[incr ::forms::counter]
+    if {[info exists a(-defaults)]} {
+        array set $var $a(-defaults)
+    }
+    toplevel .form
+    wm resizable .form no no
+    wm title .form $a(-title)
 
-    toplevel .user_form
-    wm withdraw .user_form
-    wm resizable .user_form no no
-    wm protocol .user_form WM_DELETE_WINDOW { wm withdraw .user_form }
-    ttk::frame .user_form.c
-    ttk::label .user_form.userlbl -text "Username"
-    ttk::entry .user_form.user -textvariable user_form(username)
-    ttk::label .user_form.pwlbl -text "Password"
-    ttk::entry .user_form.pw -textvariable user_form(password) -show *
-    ttk::button .user_form.ok -textvariable user_form(oklbl) \
-        -command {
-            wm withdraw .user_form
-            {*}$user_form(cb) $user_form(username) $user_form(password)
+    ttk::frame .form.c
+    pack .form.c -expand 1 -fill both
+
+    foreach {label name type} $a(-form) {
+        ttk::label .form.${name}lbl -text $label
+        set rest [lassign $type kind]
+        switch $kind {
+            text {
+                ttk::entry .form.${name}ent {*}$rest \
+                    -textvariable ${var}($name)
+            }
+            pq {
+                prompt_query .form.${name}ent {*}$rest \
+                    -textvariable ${var}($name)
+            }
+            choice {
+                ttk::combobox .form.${name}ent {*}$rest \
+                    -textvariable ${var}($name)
+            }
+            default {
+                error "unknown kind: $kind"
+            }
         }
-    ttk::button .user_form.cancel -text "Cancel" -command {
-        wm withdraw .user_form
+        grid .form.${name}lbl .form.${name}ent -in .form.c
     }
 
-    grid .user_form.userlbl .user_form.user -in .user_form.c
-    grid .user_form.pwlbl .user_form.pw -in .user_form.c
-    grid .user_form.ok .user_form.cancel -in .user_form.c
-    
-    pack .user_form.c -expand yes -fill both       
-}
+    set a(-cb) [list {*}$a(-cb)]
 
-proc prompt_user {callback title oklbl} {
-    global user_form
-    wm title .user_form $title
-    set user_form(cb) $callback
-    set user_form(oklbl) $oklbl
-    wm deiconify .user_form
+    bind .form <Destroy> [list unset -nocomplain $var]
+
+    ttk::button .form.ok -text $a(-oklbl) \
+        -command [string map [list @CB@ $a(-cb) @VAR@ $var] {
+            @CB@ [array get @VAR@]
+            destroy .form
+        }]
+
+    ttk::button .form.cancel -text Cancel \
+        -command { destroy .form }
+
+    grid .form.ok .form.cancel -in .form.c
 }
 
 proc prompt_query_open {w stmt} {
@@ -108,31 +127,42 @@ proc prompt_query_open {w stmt} {
     }
 }
 
-proc prompt_query_select {w variable} {
+proc prompt_query_select {w variable intvn} {
     upvar #0 $variable v
+    upvar #0 $intvn intv
     lassign [$w.win.list selection] selid
     if {$selid eq {}} return
     wm withdraw $w.win
-    array set v [$w.win.list set $selid]
+    set v [$w.win.list set $selid]
+    array set intv $v
 }
 
-proc prompt_query {w query columns title variable lblrow} {
-    set stmt [uplevel 1 [list db prepare $query]]
-    ttk::button $w -textvariable ${variable}($lblrow) -command \
+namespace eval pq {
+    variable counter 0
+}
+
+proc prompt_query {w args} {
+    array set a $args
+    upvar #0 $a(-textvariable) tv
+    set varname ::pq::[incr ::pq::counter]
+    if {[info exists tv]} { array set $varname $tv }
+    set stmt [uplevel 1 [list db prepare $a(-query)]]
+    ttk::button $w -textvariable ${varname}($a(-labelcolumn)) -command \
         [list prompt_query_open $w $stmt]
     toplevel $w.win
     wm withdraw $w.win
-    wm title $w.win $title
+    wm title $w.win $a(-title)
     wm protocol $w.win WM_DELETE_WINDOW [list wm withdraw $w.win]
     ttk::treeview $w.win.list \
-        -columns [lmap {id _} $columns { set id }] \
+        -columns [lmap {id _} $a(-columns) { set id }] \
         -selectmode browse \
         -show headings
 
     pack $w.win.list -fill both -expand 1
-    foreach {id name} $columns { $w.win.list heading $id -text $name }
+    foreach {id name} $a(-columns) { $w.win.list heading $id -text $name }
 
-    bind $w.win.list <Double-1> [list prompt_query_select $w $variable]
+    bind $w.win.list <Double-1> [list prompt_query_select $w $a(-textvariable) $varname]
+    bind $w <Destroy> [list $stmt close]\n[list unset -nocomplain $varname]
 }
 
 proc load_permissions {w table subjtable} {
@@ -156,85 +186,80 @@ proc load_permissions {w table subjtable} {
     }
 }
 
-proc create_permission_form {w varname subjectbl subjecttitle} {
-    upvar #0 $varname var
-
-    toplevel $w
-    wm withdraw $w
-    wm resizable $w no no
-    wm protocol $w WM_DELETE_WINDOW [list wm withdraw $w]
-    ttk::frame $w.c
-    ttk::label $w.categorylbl -text "Category"
-    ttk::entry $w.category -textvariable ${varname}(category)
-    ttk::label $w.namelbl -text "Name"
-    ttk::entry $w.name -textvariable ${varname}(name)
-    ttk::label $w.performerlbl -text "Performer"
-    prompt_query $w.performer \
-        {SELECT id, name FROM roles} \
-        {id "ID" name "Name"} \
-        "Select a role" \
-        ${varname}_performer \
-        name
-    ttk::label $w.subjectlbl -text "Subject"
-    prompt_query $w.subject \
-        "SELECT id, name FROM $subjectbl" \
-        {id "ID" name "Name"} \
-        $subjecttitle \
-        ${varname}_subject \
-        name
-
-    ttk::label $w.permtypelbl -text "Permission type"
-    ttk::combobox $w.permtype \
-        -values {allow deny} \
-        -textvariable ${varname}(permtype)
-
-    ttk::label $w.prioritylbl -text "Priority"
-    ttk::entry $w.priority \
-        -textvariable ${varname}(priority)
-
-    ttk::button $w.accept -textvariable ${varname}(oklbl)\
-        -command [list apply {{w vn} {
-            upvar #0 $vn var
-            upvar #0 ${vn}_performer perf
-            upvar #0 ${vn}_subject subj
-            wm withdraw $w
-            {*}$var(cb) [list {*}[array get var] \
-                             performer [array get perf] \
-                             subject [array get subj]]
-        }} $w $varname]
-    ttk::button $w.cancel -text "Cancel" \
-        -command [list wm withdraw $w]
-
-    grid $w.categorylbl $w.category -in $w.c
-    grid $w.namelbl $w.name -in $w.c
-    grid $w.performerlbl $w.performer -in $w.c
-    grid $w.subjectlbl $w.subject -in $w.c
-    grid $w.permtypelbl $w.permtype -in $w.c
-    grid $w.prioritylbl $w.priority -in $w.c
-    grid $w.accept $w.cancel -in $w.c
-
-    pack $w.c -fill both -expand 1
+proc prompt_user {args} {
+    array set a $args
+    show_form \
+        -title $a(-title) \
+        -oklbl $a(-oklbl) \
+        -cb $a(-cb) \
+        -form {
+            "Username" username text
+            "Password" password password
+        }
 }
 
-proc prompt_permission {callback w var oklbl title data} {
-    upvar #0 $var v
-    upvar #0 ${var}_performer perf
-    upvar #0 ${var}_subject subj
-    array set d $data
+proc prompt_class {args} {
+    show_form \
+        {*}$args \
+        -form {
+            "Name"     name     text
+            "Regex"    regex    text
+            "Ordering" ordering text
+        }
+}
 
-    set v(cb) $callback
-    set v(oklbl) $oklbl
-    set v(category) $d(category)
-    set v(name) $d(name)
-    set perf(id) $d(performerid)
-    set subj(id) $d(subjectid)
-    set perf(name) $d(performername)
-    set subj(name) $d(subjectname)
-    set v(permtype) $d(permtype)
-    set v(priority) $d(priority)
+proc insert_class {res} {
+    dict update res \
+        name name \
+        regex regex \
+        ordering ordering \
+        {}
 
-    wm title $w $title
-    wm deiconify $w
+    set id [new_snowflake]
+    db transaction {
+        db allrows {
+            INSERT INTO classes
+              (id, name, regex, ordering)
+            VALUES
+              (:id, :name, :regex, :ordering::integer)
+        }
+    }
+}
+
+proc load_classes {w} {
+    $w delete [$w children {}]
+    db foreach -as lists row {SELECT id, name, special, regex, ordering} {
+        lassign $row id
+        $w insert {} end \
+            -id $id \
+            -values $row
+    }
+}
+
+proc prompt_permission {args} {
+    array set a $args
+    set mapping [list @SUBJECTBL@ $a(-subjecttable) \
+                     @SUBJECTTITLE@ [list $a(-subjecttitle)]]
+    show_form \
+        {*}[array get a] \
+        -form [string map $mapping {
+            "Category"  category  text
+            "Name"      name      text
+            "Performer" performer {pq
+                -query {SELECT id, name FROM roles}
+                -title "Select a role"
+                -columns {id "ID" name "Name"}
+                -labelcolumn name
+            }
+            "Subject" subject {pq
+                -query {SELECT id, name FROM @SUBJECTBL@}
+                -title @SUBJECTTITLE@
+                -columns {id "ID" name "Name"}
+                -labelcolumn name
+            }
+            "Permission type" permtype {choice -values {allow deny}}
+            "Priority" priority text
+        }]
 }
 
 proc create_permission {tbl a} {
@@ -253,7 +278,6 @@ proc create_permission {tbl a} {
               (id, category, name, performer, subject, perm, priority)
             VALUES
               (:id, :category, :name, :performer, :subject, :permtype, :priority)
-            
         }]
     }
 }
@@ -281,22 +305,56 @@ proc edit_permission {tbl id a} {
     }
 }
 
+proc delete_permission {tbl id} {
+    db transaction {
+        db allrows [string map [list @TABLE@ $tbl] {
+            DELETE FROM @TABLE@ WHERE id = :id
+        }]
+    }
+}
+
+proc row->dict {row} {
+    set retval [dict create]
+    foreach {key val} $row {
+        dict set retval {*}$key $val
+    }
+
+    set retval
+}
+
 ttk::frame .c
 ttk::notebook .nb
 .nb add [ttk::frame .nb.users] -text "Users"
 
-create_user_form
 ttk::treeview .nb.users.list -columns {id created_at}
 .nb.users.list heading id -text "User ID"
 .nb.users.list heading created_at -text "Created at"
 
 ttk::button .nb.users.load_users \
     -text "Load users" \
-    -command [list load_users .nb.users.list]
+    -command {load_users .nb.users.list}
 
 ttk::button .nb.users.create_user \
     -text "Create user" \
-    -command {prompt_user insert_user "Create a new user" "Create"}
+    -command {
+        prompt_user \
+            -title "Create a new user" \
+            -oklbl "Create" \
+            -cb insert_user
+    }
+
+.nb add [ttk::frame .nb.classes] -text "Classes"
+ttk::treeview .nb.classes.list \
+    -columns {id name special regex ordering} \
+    -show headings \
+    -displaycolumns {id name special regex ordering}
+
+ttk::button .nb.classes.load \
+    -text "Load classes"
+
+pack .nb.classes.load -side left -anchor nw
+pack .nb.classes.list -side top -expand yes -fill both -anchor nw
+#pack .nb.classes.create_class -side left -anchor nw
 
 pack .nb.users.list -side top -expand yes -fill both -anchor nw
 pack .nb.users.load_users -side left -anchor nw
@@ -305,17 +363,22 @@ pack .nb.users.create_user -side left -anchor nw
 .nb add [ttk::frame .nb.permissions] -text "Article permissions"
 ttk::treeview .nb.permissions.list \
     -columns {
-        id category name performerid performername
-        subjectid subjectname priority permtype created_at
+        id category name
+        {performer id} {performer name}
+        {subject id}   {subject name}
+        priority permtype created_at
     } \
     -show headings \
-    -displaycolumns {id category name performername
-        subjectname priority permtype created_at}
+    -displaycolumns {
+        id category name
+        {performer name} {subject name}
+        priority permtype created_at
+    }
 
 .nb.permissions.list heading id -text ID
 .nb.permissions.list heading category -text Category
-.nb.permissions.list heading performername -text Performer
-.nb.permissions.list heading subjectname -text Subject
+.nb.permissions.list heading {performer name} -text Performer
+.nb.permissions.list heading {subject name} -text Subject
 .nb.permissions.list heading priority -text Priority
 .nb.permissions.list heading permtype -text "Permission type"
 .nb.permissions.list heading created_at -text "Created at"
@@ -324,40 +387,27 @@ ttk::button .nb.permissions.load \
     -text "Load permissions" \
     -command {load_permissions .nb.permissions.list article_permissions classes}
 
-
-create_permission_form .article_perm_form article_perm_form classes "Choose a class"
-
 ttk::button .nb.permissions.create \
     -text "Add permission" \
     -command {
         prompt_permission \
-            {create_permission article_permissions} \
-            .article_perm_form \
-            article_perm_form \
-            "Add" \
-            "Add a new permission" \
-            {
-                category ""
-                name ""
-                performerid ""
-                performername ""
-                subjectid ""
-                subjectname ""
-                permtype ""
-                priority ""
-            }
+            -title "Add a new permission" \
+            -oklbl "Add" \
+            -cb {create_permission article_permissions} \
+            -subjecttable classes \
+            -subjecttitle "Select a class"
     }
 
 bind .nb.permissions.list <Double-1> {
     lassign [%W selection] selid
     if {$selid ne {}} {
         prompt_permission \
-            [list edit_permission article_permissions $selid] \
-            .article_perm_form \
-            article_perm_form \
-            "Edit" \
-            "Edit permission $selid" \
-            [%W set $selid]
+            -title "Edit permission $selid" \
+            -oklbl "Edit" \
+            -cb [list edit_permission article_permissions $selid] \
+            -subjecttable classes \
+            -subjecttitle "Select a class" \
+            -defaults [row->dict [%W set $selid]]
     }
 }
 
